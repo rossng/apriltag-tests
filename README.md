@@ -66,6 +66,27 @@ Features:
 
 See `tools/ground-truth-editor/README.md` for details.
 
+## Comparison Reports
+
+### compare-detectors
+
+Generate an HTML report comparing detector results against ground truth annotations.
+
+```bash
+# Generate report using default paths
+nix run .#compare-detectors
+
+# Specify custom paths
+nix run .#compare-detectors ground-truth/ results/ my-report.html
+```
+
+The report includes:
+- **Summary Statistics**: Precision, recall, F1 score for each detector
+- **Per-Image Analysis**: Shows missed detections and false positives for each image
+- **Family Breakdown**: Missed detections and false positives grouped by tag family
+
+Output: `comparison-report.html` (open in browser)
+
 ## Utilities
 
 ### strip-exif

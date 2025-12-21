@@ -179,10 +179,43 @@
           cleanup
         '';
 
+        # Script to generate comparison report
+        compare-detectors = pkgs.writeShellScriptBin "compare-detectors" ''
+          GROUND_TRUTH_DIR="''${1:-ground-truth}"
+          RESULTS_DIR="''${2:-results}"
+          OUTPUT_FILE="''${3:-comparison-report.html}"
+
+          echo "Generating detector comparison report..."
+          echo "  Ground Truth: $GROUND_TRUTH_DIR"
+          echo "  Results:      $RESULTS_DIR"
+          echo "  Output:       $OUTPUT_FILE"
+          echo ""
+
+          cd tools/compare-detectors
+
+          # Ensure dependencies are installed
+          if [ ! -d "node_modules" ]; then
+            echo "Installing dependencies..."
+            ${pkgs.nodejs}/bin/npm install
+          fi
+
+          # Build TypeScript if needed
+          if [ ! -d "dist" ] || [ src/compare.ts -nt dist/compare.js ]; then
+            echo "Building TypeScript..."
+            ${pkgs.nodejs}/bin/npm run build
+          fi
+
+          ${pkgs.nodejs}/bin/node dist/compare.js \
+            --ground-truth "../../$GROUND_TRUTH_DIR" \
+            --results "../../$RESULTS_DIR" \
+            --detectors apriltag-3.4.5 apriltags-kaess \
+            --output "../../$OUTPUT_FILE"
+        '';
+
       in
       {
         packages = {
-          inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5 edit-ground-truth apriltags-kaess apriltags-kaess-detector run-apriltags-kaess;
+          inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5 edit-ground-truth apriltags-kaess apriltags-kaess-detector run-apriltags-kaess compare-detectors;
         };
 
         apps = {
@@ -202,6 +235,10 @@
             type = "app";
             program = "${edit-ground-truth}/bin/edit-ground-truth";
           };
+          compare-detectors = {
+            type = "app";
+            program = "${compare-detectors}/bin/compare-detectors";
+          };
         };
 
         devShells.default = pkgs.mkShell {
@@ -220,6 +257,7 @@
             echo "  run-apriltag-3-4-5        - Run AprilTag 3.4.5 detector on data/"
             echo "  run-apriltags-kaess       - Run AprilTags Kaess detector on data/"
             echo "  edit-ground-truth         - Open ground truth annotation tool"
+            echo "  compare-detectors         - Generate comparison report vs ground truth"
           '';
         };
       }

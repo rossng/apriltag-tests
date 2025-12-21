@@ -205,5 +205,22 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Processed " << processed_count << " images" << std::endl;
 
+    // Write manifest.json
+    std::string manifest_path = (fs::path(output_dir) / "manifest.json").string();
+    std::ofstream manifest_out(manifest_path);
+    if (manifest_out) {
+        manifest_out << "{\n";
+        manifest_out << "  \"supported_families\": [\n";
+        for (size_t i = 0; i < families.size(); ++i) {
+            manifest_out << "    \"" << families[i].first << "\"";
+            if (i < families.size() - 1) manifest_out << ",";
+            manifest_out << "\n";
+        }
+        manifest_out << "  ]\n";
+        manifest_out << "}\n";
+        manifest_out.close();
+        std::cout << "Wrote manifest: " << manifest_path << std::endl;
+    }
+
     return 0;
 }
