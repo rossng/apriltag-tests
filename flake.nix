@@ -108,6 +108,32 @@
           '';
         };
 
+        # Kornia AprilTag detector program (Rust)
+        kornia-apriltag-0-1-10-detector = pkgs.rustPlatform.buildRustPackage {
+          pname = "kornia-apriltag-0-1-10-detector";
+          version = "1.0.0";
+
+          src = ./detectors/kornia-apriltag-0.1.10;
+
+          cargoLock = {
+            lockFile = ./detectors/kornia-apriltag-0.1.10/Cargo.lock;
+          };
+
+          nativeBuildInputs = [ pkgs.pkg-config ];
+          buildInputs = [ pkgs.libjpeg pkgs.libpng ];
+
+          installPhase = ''
+            mkdir -p $out/bin
+            cp target/*/release/kornia-apriltag-detector $out/bin/kornia-apriltag-0-1-10-detector
+          '';
+
+          meta = {
+            description = "AprilTag detector using kornia-apriltag 0.1.10";
+            homepage = "https://github.com/kornia/kornia-rs";
+            license = pkgs.lib.licenses.asl20;
+          };
+        };
+
         # Script to strip EXIF data from images in data/ folder
         strip-exif = pkgs.writeShellScriptBin "strip-exif" ''
           ${pkgs.exiftool}/bin/exiftool -all= -overwrite_original -r data
@@ -139,6 +165,21 @@
           echo ""
 
           ${apriltags-kaess-3aea96d-detector}/bin/apriltags-kaess-3aea96d-detector \
+            --input "$INPUT_DIR" \
+            --output "$OUTPUT_DIR"
+        '';
+
+        # Script to run Kornia AprilTag detector on data/ folder
+        run-kornia-apriltag-0-1-10 = pkgs.writeShellScriptBin "run-kornia-apriltag-0-1-10" ''
+          INPUT_DIR="''${1:-data}"
+          OUTPUT_DIR="''${2:-results/kornia-apriltag-0.1.10}"
+
+          echo "Running Kornia AprilTag (0.1.10) detector"
+          echo "  Input:  $INPUT_DIR"
+          echo "  Output: $OUTPUT_DIR"
+          echo ""
+
+          ${kornia-apriltag-0-1-10-detector}/bin/kornia-apriltag-0-1-10-detector \
             --input "$INPUT_DIR" \
             --output "$OUTPUT_DIR"
         '';
@@ -215,7 +256,7 @@
       in
       {
         packages = {
-          inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5 edit-ground-truth apriltags-kaess-3aea96d apriltags-kaess-3aea96d-detector run-apriltags-kaess-3aea96d compare-detectors;
+          inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5 edit-ground-truth apriltags-kaess-3aea96d apriltags-kaess-3aea96d-detector run-apriltags-kaess-3aea96d kornia-apriltag-0-1-10-detector run-kornia-apriltag-0-1-10 compare-detectors;
         };
 
         apps = {
@@ -230,6 +271,10 @@
           run-apriltags-kaess-3aea96d = {
             type = "app";
             program = "${run-apriltags-kaess-3aea96d}/bin/run-apriltags-kaess-3aea96d";
+          };
+          run-kornia-apriltag-0-1-10 = {
+            type = "app";
+            program = "${run-kornia-apriltag-0-1-10}/bin/run-kornia-apriltag-0-1-10";
           };
           edit-ground-truth = {
             type = "app";
@@ -254,10 +299,11 @@
             echo "  exiftool <file>           - Inspect EXIF data"
             echo ""
             echo "Available apps (use 'nix run .#<app>'):"
-            echo "  run-apriltag-3-4-5             - Run AprilTag 3.4.5 detector on data/"
-            echo "  run-apriltags-kaess-3aea96d    - Run AprilTags Kaess (3aea96d) detector on data/"
-            echo "  edit-ground-truth              - Open ground truth annotation tool"
-            echo "  compare-detectors              - Generate comparison report vs ground truth"
+            echo "  run-apriltag-3-4-5              - Run AprilTag 3.4.5 detector on data/"
+            echo "  run-apriltags-kaess-3aea96d     - Run AprilTags Kaess (3aea96d) detector on data/"
+            echo "  run-kornia-apriltag-0-1-10      - Run Kornia AprilTag (0.1.10) detector on data/"
+            echo "  edit-ground-truth               - Open ground truth annotation tool"
+            echo "  compare-detectors               - Generate comparison report vs ground truth"
           '';
         };
       }

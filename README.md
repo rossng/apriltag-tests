@@ -46,6 +46,20 @@ nix run .#run-apriltags-kaess-3aea96d custom-input/ custom-output/
 
 The detector supports tag families: tag36h11, tag36h9, tag25h9, tag25h7, tag16h5.
 
+### Kornia AprilTag (0.1.10)
+
+Kornia-rs AprilTag library (Rust implementation).
+
+```bash
+# Run on data/ folder, output to results/kornia-apriltag-0.1.10/
+nix run .#run-kornia-apriltag-0-1-10
+
+# Run on custom folders
+nix run .#run-kornia-apriltag-0-1-10 custom-input/ custom-output/
+```
+
+The detector supports tag families: tag36h11, tag36h10, tag25h9, tag16h5, tagCircle21h7, tagCircle49h12, tagCustom48h12, tagStandard41h12, tagStandard52h13.
+
 ## Ground Truth Annotation
 
 ### edit-ground-truth
