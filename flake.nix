@@ -74,10 +74,46 @@
             --output "$OUTPUT_DIR"
         '';
 
+        # Script to run ground truth editor
+        edit-ground-truth = pkgs.writeShellScriptBin "edit-ground-truth" ''
+          echo "Starting Ground Truth Editor..."
+          echo "  API Server: http://localhost:3000"
+          echo "  Frontend:   http://localhost:5173"
+          echo ""
+
+          cd tools/ground-truth-editor
+
+          # Ensure dependencies are installed
+          if [ ! -d "node_modules" ]; then
+            echo "Installing dependencies..."
+            ${pkgs.nodejs}/bin/npm install
+          fi
+
+          # Start the API server in the background
+          ${pkgs.nodejs}/bin/npm run server &
+          SERVER_PID=$!
+
+          # Cleanup function
+          cleanup() {
+            echo ""
+            echo "Shutting down..."
+            kill $SERVER_PID 2>/dev/null
+            exit
+          }
+
+          trap cleanup INT TERM
+
+          # Start Vite dev server (will run in foreground)
+          ${pkgs.nodejs}/bin/npm run dev
+
+          # Kill server when Vite exits
+          cleanup
+        '';
+
       in
       {
         packages = {
-          inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5;
+          inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5 edit-ground-truth;
         };
 
         apps = {
@@ -88,6 +124,10 @@
           run-apriltag-3-4-5 = {
             type = "app";
             program = "${run-apriltag-3-4-5}/bin/run-apriltag-3-4-5";
+          };
+          edit-ground-truth = {
+            type = "app";
+            program = "${edit-ground-truth}/bin/edit-ground-truth";
           };
         };
 
@@ -105,6 +145,7 @@
             echo ""
             echo "Available apps (use 'nix run .#<app>'):"
             echo "  run-apriltag-3-4-5        - Run AprilTag 3.4.5 detector on data/"
+            echo "  edit-ground-truth         - Open ground truth annotation tool"
           '';
         };
       }

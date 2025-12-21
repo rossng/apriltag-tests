@@ -1,0 +1,523 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+header {
+    background: #2c3e50;
+    color: white;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+h1 {
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+
+.main-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 300px;
+    background: white;
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.sidebar section {
+    padding: 1rem;
+}
+
+.sidebar h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: #2c3e50;
+}
+
+.image-list {
+    border-bottom: 1px solid #ddd;
+    max-height: 30%;
+    overflow-y: auto;
+}
+
+.detection-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+#detectionList {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.image-item {
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.image-item:hover {
+    background: #ecf0f1;
+}
+
+.image-item.active {
+    background: #3498db;
+    color: white;
+}
+
+.detection-item {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    background: white;
+}
+
+.detection-item:hover {
+    border-color: #3498db;
+}
+
+.detection-item.selected {
+    border-color: #3498db;
+    background: #ebf5fb;
+}
+
+.detection-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.detection-title {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.detection-family {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+}
+
+.detection-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.edit-btn {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.edit-btn:hover {
+    background: #2980b9;
+}
+
+.delete-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.delete-btn:hover {
+    background: #c0392b;
+}
+
+.controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.controls button {
+    flex: 1;
+    padding: 0.5rem;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.controls button:hover {
+    background: #2980b9;
+}
+
+.add-panel {
+    background: #ebf5fb;
+    border: 2px solid #3498db;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.add-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.add-panel-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: #2c3e50;
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    color: #7f8c8d;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    line-height: 1;
+}
+
+.icon-btn:hover {
+    color: #2c3e50;
+}
+
+.add-panel label {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.add-panel select,
+.add-panel input {
+    width: 100%;
+    padding: 0.4rem;
+    margin-top: 0.25rem;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.add-panel .instruction {
+    background: white;
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin: 0.75rem 0;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.corner-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.corner-btn {
+    padding: 0.5rem;
+    border: 2px solid #bdc3c7;
+    background: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.corner-btn:hover {
+    border-color: #95a5a6;
+}
+
+.corner-btn.active {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.corner-btn.set {
+    background: #27ae60;
+    color: white;
+    border-color: #27ae60;
+}
+
+.corner-btn.set:hover {
+    background: #229954;
+    border-color: #229954;
+}
+
+#cornerHint {
+    display: block;
+    color: #7f8c8d;
+    font-size: 0.85rem;
+}
+
+.primary-btn {
+    width: 100%;
+    padding: 0.5rem;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-top: 0.75rem;
+}
+
+.primary-btn:hover {
+    background: #229954;
+}
+
+.secondary-btn {
+    width: 100%;
+    padding: 0.5rem;
+    background: #95a5a6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.secondary-btn:hover:not(:disabled) {
+    background: #7f8c8d;
+}
+
+.secondary-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.canvas-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #ecf0f1;
+    position: relative;
+}
+
+.canvas-controls {
+    padding: 1rem;
+    background: white;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.canvas-controls > div {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+#imageInfo {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.zoom-controls button {
+    padding: 0.25rem 0.5rem;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    min-width: 30px;
+}
+
+.zoom-controls button:hover {
+    background: #e9ecef;
+}
+
+#zoomLevel {
+    font-size: 0.9rem;
+    color: #495057;
+    min-width: 50px;
+    text-align: center;
+}
+
+#saveButton {
+    padding: 0.5rem 1.5rem;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+#saveButton:hover {
+    background: #229954;
+}
+
+.canvas-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    padding: 2rem;
+}
+
+#mainCanvas {
+    border: 2px solid #bdc3c7;
+    background: white;
+    cursor: crosshair;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    max-width: calc(100vw - 300px - 6rem);
+    max-height: calc(100vh - 200px);
+    object-fit: contain;
+}
+
+.magnifier {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 200px;
+    height: 200px;
+    border: 3px solid #3498db;
+    border-radius: 8px;
+    display: none;
+    pointer-events: none;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.3);
+    align-items: flex-start;
+    justify-content: center;
+    z-index: 2000;
+    padding-top: 2rem;
+    pointer-events: none;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    min-width: 400px;
+    max-width: 500px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    pointer-events: auto;
+}
+
+.modal-content h3 {
+    margin-bottom: 1.5rem;
+    color: #2c3e50;
+}
+
+.modal-content label {
+    display: block;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.modal-content select,
+.modal-content input {
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 0.25rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.instruction {
+    background: #ebf5fb;
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+    color: #2c3e50;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+}
+
+.modal-buttons button {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+.modal-buttons button:first-child {
+    background: #3498db;
+    color: white;
+}
+
+.modal-buttons button:first-child:hover {
+    background: #2980b9;
+}
+
+.modal-buttons button:last-child {
+    background: #95a5a6;
+    color: white;
+}
+
+.modal-buttons button:last-child:hover {
+    background: #7f8c8d;
+}

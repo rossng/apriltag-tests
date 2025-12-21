@@ -32,6 +32,26 @@ nix run .#run-apriltag-3-4-5 custom-input/ custom-output/
 
 The detector supports all AprilTag families: tag36h11, tag25h9, tag16h5, tagCircle21h7, tagCircle49h12, tagCustom48h12, tagStandard41h12, tagStandard52h13.
 
+## Ground Truth Annotation
+
+### edit-ground-truth
+
+Web-based tool for creating and editing ground truth annotations.
+
+```bash
+nix run .#edit-ground-truth
+# Open http://localhost:3000 in your browser
+```
+
+Features:
+- Visual annotation with precise corner placement
+- Magnified view for accuracy
+- Import detections from detector results
+- Filter by tag family when importing
+- Save to `ground-truth/` folder
+
+See `tools/ground-truth-editor/README.md` for details.
+
 ## Utilities
 
 ### strip-exif

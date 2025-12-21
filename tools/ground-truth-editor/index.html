@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AprilTag Ground Truth Editor</title>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AprilTag Ground Truth Editor</h1>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <section class="image-list">
+                    <h2>Images</h2>
+                    <div id="imageList"></div>
+                </section>
+
+                <section class="detection-list">
+                    <h2>Detections (<span id="detectionCount">0</span>)</h2>
+                    <div class="controls">
+                        <button id="addDetection">+ Add Detection</button>
+                        <button id="importDetections">Import from Results</button>
+                    </div>
+
+                    <!-- Add Detection Panel -->
+                    <div id="addPanel" class="add-panel" style="display: none;">
+                        <div class="add-panel-header">
+                            <h3>Adding Detection</h3>
+                            <button id="cancelAdd" class="icon-btn">✕</button>
+                        </div>
+                        <label>
+                            Tag Family:
+                            <select id="newFamily">
+                                <option>tag36h11</option>
+                                <option>tag25h9</option>
+                                <option>tag16h5</option>
+                                <option>tagCircle21h7</option>
+                                <option>tagCircle49h12</option>
+                                <option>tagCustom48h12</option>
+                                <option>tagStandard41h12</option>
+                                <option>tagStandard52h13</option>
+                            </select>
+                        </label>
+                        <label>
+                            Tag ID:
+                            <input type="number" id="newTagId" value="0" min="0">
+                        </label>
+                        <div class="instruction">
+                            <div id="cornerButtons" class="corner-buttons">
+                                <button class="corner-btn" data-corner="0">BL</button>
+                                <button class="corner-btn" data-corner="1">BR</button>
+                                <button class="corner-btn" data-corner="2">TR</button>
+                                <button class="corner-btn" data-corner="3">TL</button>
+                            </div>
+                            <small id="cornerHint">Click a corner button to start</small>
+                        </div>
+                        <button id="saveEdit" class="primary-btn" style="display: none;">Save Changes</button>
+                    </div>
+
+                    <div id="detectionList"></div>
+                </section>
+            </aside>
+
+            <main class="canvas-area">
+                <div class="canvas-controls">
+                    <div>
+                        <span id="imageInfo"></span>
+                        <div class="zoom-controls">
+                            <button id="zoomOut">-</button>
+                            <span id="zoomLevel">100%</span>
+                            <button id="zoomIn">+</button>
+                            <button id="zoomReset">Reset</button>
+                        </div>
+                    </div>
+                    <button id="saveButton">Save Ground Truth</button>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="mainCanvas"></canvas>
+                </div>
+                <div id="magnifier" class="magnifier"></div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <h3>Import Detections</h3>
+            <label>
+                Detector:
+                <select id="importDetector"></select>
+            </label>
+            <label>
+                Filter by Tag Family (optional):
+                <select id="importFamily">
+                    <option value="">All families</option>
+                    <option>tag36h11</option>
+                    <option>tag25h9</option>
+                    <option>tag16h5</option>
+                    <option>tagCircle21h7</option>
+                    <option>tagCircle49h12</option>
+                    <option>tagCustom48h12</option>
+                    <option>tagStandard41h12</option>
+                    <option>tagStandard52h13</option>
+                </select>
+            </label>
+            <div class="modal-buttons">
+                <button id="doImport">Import</button>
+                <button id="cancelImport">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
