@@ -35,8 +35,8 @@
         };
 
         # Michael Kaess' apriltags library (commit 3aea96d)
-        apriltags-kaess = pkgs.stdenv.mkDerivation {
-          pname = "apriltags-kaess";
+        apriltags-kaess-3aea96d = pkgs.stdenv.mkDerivation {
+          pname = "apriltags-kaess-3aea96d";
           version = "unstable-2024-09-21";
 
           src = pkgs.fetchFromBitbucket {
@@ -88,23 +88,23 @@
         };
 
         # AprilTags Kaess detector program
-        apriltags-kaess-detector = pkgs.stdenv.mkDerivation {
-          pname = "apriltags-kaess-detector";
+        apriltags-kaess-3aea96d-detector = pkgs.stdenv.mkDerivation {
+          pname = "apriltags-kaess-3aea96d-detector";
           version = "1.0.0";
 
-          src = ./detectors/apriltags-kaess;
+          src = ./detectors/apriltags-kaess-3aea96d;
 
           nativeBuildInputs = [ pkgs.cmake ];
-          buildInputs = [ apriltags-kaess pkgs.opencv pkgs.eigen ];
+          buildInputs = [ apriltags-kaess-3aea96d pkgs.opencv pkgs.eigen ];
 
           cmakeFlags = [
-            "-DAPRILTAGS_INCLUDE_DIR=${apriltags-kaess}/include"
-            "-DAPRILTAGS_LIBRARY=${apriltags-kaess}/lib/libapriltags.a"
+            "-DAPRILTAGS_INCLUDE_DIR=${apriltags-kaess-3aea96d}/include"
+            "-DAPRILTAGS_LIBRARY=${apriltags-kaess-3aea96d}/lib/libapriltags.a"
           ];
 
           installPhase = ''
             mkdir -p $out/bin
-            cp detector $out/bin/apriltags-kaess-detector
+            cp detector $out/bin/apriltags-kaess-3aea96d-detector
           '';
         };
 
@@ -129,16 +129,16 @@
         '';
 
         # Script to run AprilTags Kaess detector on data/ folder
-        run-apriltags-kaess = pkgs.writeShellScriptBin "run-apriltags-kaess" ''
+        run-apriltags-kaess-3aea96d = pkgs.writeShellScriptBin "run-apriltags-kaess-3aea96d" ''
           INPUT_DIR="''${1:-data}"
-          OUTPUT_DIR="''${2:-results/apriltags-kaess}"
+          OUTPUT_DIR="''${2:-results/apriltags-kaess-3aea96d}"
 
-          echo "Running AprilTags Kaess detector"
+          echo "Running AprilTags Kaess (3aea96d) detector"
           echo "  Input:  $INPUT_DIR"
           echo "  Output: $OUTPUT_DIR"
           echo ""
 
-          ${apriltags-kaess-detector}/bin/apriltags-kaess-detector \
+          ${apriltags-kaess-3aea96d-detector}/bin/apriltags-kaess-3aea96d-detector \
             --input "$INPUT_DIR" \
             --output "$OUTPUT_DIR"
         '';
@@ -208,14 +208,14 @@
           ${pkgs.nodejs}/bin/node dist/compare.js \
             --ground-truth "../../$GROUND_TRUTH_DIR" \
             --results "../../$RESULTS_DIR" \
-            --detectors apriltag-3.4.5 apriltags-kaess \
+            --detectors apriltag-3.4.5 apriltags-kaess-3aea96d \
             --output "../../$OUTPUT_FILE"
         '';
 
       in
       {
         packages = {
-          inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5 edit-ground-truth apriltags-kaess apriltags-kaess-detector run-apriltags-kaess compare-detectors;
+          inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5 edit-ground-truth apriltags-kaess-3aea96d apriltags-kaess-3aea96d-detector run-apriltags-kaess-3aea96d compare-detectors;
         };
 
         apps = {
@@ -227,9 +227,9 @@
             type = "app";
             program = "${run-apriltag-3-4-5}/bin/run-apriltag-3-4-5";
           };
-          run-apriltags-kaess = {
+          run-apriltags-kaess-3aea96d = {
             type = "app";
-            program = "${run-apriltags-kaess}/bin/run-apriltags-kaess";
+            program = "${run-apriltags-kaess-3aea96d}/bin/run-apriltags-kaess-3aea96d";
           };
           edit-ground-truth = {
             type = "app";
@@ -254,10 +254,10 @@
             echo "  exiftool <file>           - Inspect EXIF data"
             echo ""
             echo "Available apps (use 'nix run .#<app>'):"
-            echo "  run-apriltag-3-4-5        - Run AprilTag 3.4.5 detector on data/"
-            echo "  run-apriltags-kaess       - Run AprilTags Kaess detector on data/"
-            echo "  edit-ground-truth         - Open ground truth annotation tool"
-            echo "  compare-detectors         - Generate comparison report vs ground truth"
+            echo "  run-apriltag-3-4-5             - Run AprilTag 3.4.5 detector on data/"
+            echo "  run-apriltags-kaess-3aea96d    - Run AprilTags Kaess (3aea96d) detector on data/"
+            echo "  edit-ground-truth              - Open ground truth annotation tool"
+            echo "  compare-detectors              - Generate comparison report vs ground truth"
           '';
         };
       }

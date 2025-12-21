@@ -32,16 +32,16 @@ nix run .#run-apriltag-3-4-5 custom-input/ custom-output/
 
 The detector supports all AprilTag families: tag36h11, tag25h9, tag16h5, tagCircle21h7, tagCircle49h12, tagCustom48h12, tagStandard41h12, tagStandard52h13.
 
-### AprilTags Kaess
+### AprilTags Kaess (3aea96d)
 
 Michael Kaess' AprilTags library (commit 3aea96d).
 
 ```bash
-# Run on data/ folder, output to results/apriltags-kaess/
-nix run .#run-apriltags-kaess
+# Run on data/ folder, output to results/apriltags-kaess-3aea96d/
+nix run .#run-apriltags-kaess-3aea96d
 
 # Run on custom folders
-nix run .#run-apriltags-kaess custom-input/ custom-output/
+nix run .#run-apriltags-kaess-3aea96d custom-input/ custom-output/
 ```
 
 The detector supports tag families: tag36h11, tag36h9, tag25h9, tag25h7, tag16h5.
