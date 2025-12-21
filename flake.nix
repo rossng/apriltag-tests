@@ -134,6 +134,35 @@
           };
         };
 
+        # Kornia-rs AprilTag detector program from apriltag-experiment branch
+        kornia-rs-apriltag-experiment-detector = pkgs.rustPlatform.buildRustPackage {
+          pname = "kornia-rs-apriltag-experiment-detector";
+          version = "1.0.0";
+
+          src = ./detectors/kornia-rs-apriltag-experiment;
+
+          cargoLock = {
+            lockFile = ./detectors/kornia-rs-apriltag-experiment/Cargo.lock;
+            outputHashes = {
+              "kornia-apriltag-0.1.11-rc.1" = "sha256-nNGNISNLEEgL6ltobNuMqLqoHznnfLxaywhTSSo1fKY=";
+            };
+          };
+
+          nativeBuildInputs = [ pkgs.pkg-config ];
+          buildInputs = [ pkgs.libjpeg pkgs.libpng ];
+
+          installPhase = ''
+            mkdir -p $out/bin
+            cp target/*/release/kornia-apriltag-detector $out/bin/kornia-rs-apriltag-experiment-detector
+          '';
+
+          meta = {
+            description = "AprilTag detector using kornia-rs apriltag-experiment branch";
+            homepage = "https://github.com/rossng/kornia-rs";
+            license = pkgs.lib.licenses.asl20;
+          };
+        };
+
         # Script to strip EXIF data from images in data/ folder
         strip-exif = pkgs.writeShellScriptBin "strip-exif" ''
           ${pkgs.exiftool}/bin/exiftool -all= -overwrite_original -r data
@@ -184,6 +213,21 @@
             --output "$OUTPUT_DIR"
         '';
 
+        # Script to run Kornia-rs AprilTag detector (apriltag-experiment branch) on data/ folder
+        run-kornia-rs-apriltag-experiment = pkgs.writeShellScriptBin "run-kornia-rs-apriltag-experiment" ''
+          INPUT_DIR="''${1:-data}"
+          OUTPUT_DIR="''${2:-results/kornia-rs-apriltag-experiment}"
+
+          echo "Running Kornia-rs AprilTag (apriltag-experiment) detector"
+          echo "  Input:  $INPUT_DIR"
+          echo "  Output: $OUTPUT_DIR"
+          echo ""
+
+          ${kornia-rs-apriltag-experiment-detector}/bin/kornia-rs-apriltag-experiment-detector \
+            --input "$INPUT_DIR" \
+            --output "$OUTPUT_DIR"
+        '';
+
         # Script to run all detectors in sequence
         run-all-detectors = pkgs.writeShellScriptBin "run-all-detectors" ''
           INPUT_DIR="''${1:-data}"
@@ -203,6 +247,10 @@
 
           # Run Kornia AprilTag
           ${run-kornia-apriltag-0-1-10}/bin/run-kornia-apriltag-0-1-10 "$INPUT_DIR" "$RESULTS_DIR/kornia-apriltag-0.1.10"
+          echo ""
+
+          # Run Kornia-rs AprilTag (apriltag-experiment)
+          ${run-kornia-rs-apriltag-experiment}/bin/run-kornia-rs-apriltag-experiment "$INPUT_DIR" "$RESULTS_DIR/kornia-rs-apriltag-experiment"
           echo ""
 
           echo "All detectors completed!"
@@ -273,14 +321,14 @@
           ${pkgs.nodejs}/bin/node dist/compare.js \
             --ground-truth "../../$GROUND_TRUTH_DIR" \
             --results "../../$RESULTS_DIR" \
-            --detectors apriltag-3.4.5 apriltags-kaess-3aea96d kornia-apriltag-0.1.10 \
+            --detectors apriltag-3.4.5 apriltags-kaess-3aea96d kornia-apriltag-0.1.10 kornia-rs-apriltag-experiment \
             --output "../../$OUTPUT_FILE"
         '';
 
       in
       {
         packages = {
-          inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5 edit-ground-truth apriltags-kaess-3aea96d apriltags-kaess-3aea96d-detector run-apriltags-kaess-3aea96d kornia-apriltag-0-1-10-detector run-kornia-apriltag-0-1-10 run-all-detectors compare-detectors;
+          inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5 edit-ground-truth apriltags-kaess-3aea96d apriltags-kaess-3aea96d-detector run-apriltags-kaess-3aea96d kornia-apriltag-0-1-10-detector run-kornia-apriltag-0-1-10 kornia-rs-apriltag-experiment-detector run-kornia-rs-apriltag-experiment run-all-detectors compare-detectors;
         };
 
         apps = {
@@ -299,6 +347,10 @@
           run-kornia-apriltag-0-1-10 = {
             type = "app";
             program = "${run-kornia-apriltag-0-1-10}/bin/run-kornia-apriltag-0-1-10";
+          };
+          run-kornia-rs-apriltag-experiment = {
+            type = "app";
+            program = "${run-kornia-rs-apriltag-experiment}/bin/run-kornia-rs-apriltag-experiment";
           };
           run-all-detectors = {
             type = "app";
@@ -327,12 +379,13 @@
             echo "  exiftool <file>           - Inspect EXIF data"
             echo ""
             echo "Available apps (use 'nix run .#<app>'):"
-            echo "  run-apriltag-3-4-5              - Run AprilTag 3.4.5 detector on data/"
-            echo "  run-apriltags-kaess-3aea96d     - Run AprilTags Kaess (3aea96d) detector on data/"
-            echo "  run-kornia-apriltag-0-1-10      - Run Kornia AprilTag (0.1.10) detector on data/"
-            echo "  run-all-detectors               - Run all detectors in sequence"
-            echo "  edit-ground-truth               - Open ground truth annotation tool"
-            echo "  compare-detectors               - Generate comparison report vs ground truth"
+            echo "  run-apriltag-3-4-5                 - Run AprilTag 3.4.5 detector on data/"
+            echo "  run-apriltags-kaess-3aea96d        - Run AprilTags Kaess (3aea96d) detector on data/"
+            echo "  run-kornia-apriltag-0-1-10         - Run Kornia AprilTag (0.1.10) detector on data/"
+            echo "  run-kornia-rs-apriltag-experiment  - Run Kornia-rs AprilTag (apriltag-experiment) detector on data/"
+            echo "  run-all-detectors                  - Run all detectors in sequence"
+            echo "  edit-ground-truth                  - Open ground truth annotation tool"
+            echo "  compare-detectors                  - Generate comparison report vs ground truth"
           '';
         };
       }

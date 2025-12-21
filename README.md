@@ -60,6 +60,20 @@ nix run .#run-kornia-apriltag-0-1-10 custom-input/ custom-output/
 
 The detector supports tag families: tag36h11, tag36h10, tag25h9, tag16h5, tagCircle21h7, tagCircle49h12, tagCustom48h12, tagStandard41h12, tagStandard52h13.
 
+### Kornia-rs AprilTag (apriltag-experiment branch)
+
+Kornia-rs AprilTag library from the apriltag-experiment branch.
+
+```bash
+# Run on data/ folder, output to results/kornia-rs-apriltag-experiment/
+nix run .#run-kornia-rs-apriltag-experiment
+
+# Run on custom folders
+nix run .#run-kornia-rs-apriltag-experiment custom-input/ custom-output/
+```
+
+The detector supports tag families: tag36h11, tag36h10, tag25h9, tag16h5, tagCircle21h7, tagCircle49h12, tagCustom48h12, tagStandard41h12, tagStandard52h13.
+
 ### Run All Detectors
 
 Run all detectors in sequence on the same input:
@@ -72,7 +86,7 @@ nix run .#run-all-detectors
 nix run .#run-all-detectors custom-input/ custom-results/
 ```
 
-This will run AprilTag 3.4.5, AprilTags Kaess (3aea96d), and Kornia AprilTag (0.1.10) detectors sequentially.
+This will run AprilTag 3.4.5, AprilTags Kaess (3aea96d), Kornia AprilTag (0.1.10), and Kornia-rs AprilTag (apriltag-experiment) detectors sequentially.
 
 ## Ground Truth Annotation
 
