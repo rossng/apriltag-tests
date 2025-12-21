@@ -4,6 +4,7 @@
 #include <vector>
 #include <filesystem>
 #include <cstring>
+#include <algorithm>
 
 #include <opencv2/opencv.hpp>
 
