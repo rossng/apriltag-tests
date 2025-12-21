@@ -25,10 +25,10 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment
+# Cancel in-progress runs when a new commit is pushed
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   detect-and-compare:
