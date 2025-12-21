@@ -49,6 +49,11 @@ jobs:
     - name: Setup Nix cache
       uses: DeterminateSystems/magic-nix-cache-action@v2
 
+    - name: Clear results directory
+      run: |
+        rm -rf results/
+        mkdir -p results/
+
     - name: Run all detectors
       run: |
         nix run .#run-all-detectors
