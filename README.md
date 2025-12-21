@@ -27,40 +27,33 @@ nix run .#edit-ground-truth
 
 All detectors follow the same interface: `--input <dir> --output <dir>`
 
-| Command | Description |
-|---------|-------------|
-| `nix run .#run-apriltag-3-4-5` | AprilTag 3.4.5 (official C implementation) |
-| `nix run .#run-apriltags-kaess-3aea96d` | Michael Kaess' AprilTags library |
-| `nix run .#run-kornia-apriltag-0-1-10` | Kornia-rs AprilTag 0.1.10 |
-| `nix run .#run-kornia-rs-apriltag-experiment` | Kornia-rs apriltag-experiment branch |
-| `nix run .#run-all-detectors` | Run all detectors sequentially |
+| Command                                       | Description                                |
+| --------------------------------------------- | ------------------------------------------ |
+| `nix run .#run-apriltag-3-4-5`                | AprilTag 3.4.5 (official C implementation) |
+| `nix run .#run-apriltags-kaess-3aea96d`       | Michael Kaess' AprilTags library           |
+| `nix run .#run-kornia-apriltag-0-1-10`        | Kornia-rs AprilTag 0.1.10                  |
+| `nix run .#run-kornia-rs-apriltag-experiment` | Kornia-rs apriltag-experiment branch       |
+| `nix run .#run-all-detectors`                 | Run all detectors sequentially             |
 
 ## Tools
 
 **Ground Truth Editor** - Web UI for creating annotations
+
 ```bash
 nix run .#edit-ground-truth  # Opens at http://localhost:5173
 ```
 
 **Comparison Report** - Compare detectors against ground truth
+
 ```bash
 nix run .#compare-detectors  # Generates comparison-report.html
 ```
 
 **Strip EXIF** - Remove metadata from images
+
 ```bash
 nix run .#strip-exif
 ```
-
-## CI/CD
-
-GitHub Actions automatically:
-- Runs all detectors on every push
-- Commits updated results if changed
-- Generates comparison report
-- Publishes report to GitHub Pages
-
-Setup: Repository Settings → Pages → Source: "GitHub Actions"
 
 ## Adding Detectors
 
