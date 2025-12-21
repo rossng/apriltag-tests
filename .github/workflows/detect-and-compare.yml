@@ -19,9 +19,9 @@ on:
       - '.github/workflows/detect-and-compare.yml'
   workflow_dispatch:
 
-# Required for GitHub Pages deployment
+# Required for GitHub Pages deployment and committing results
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
