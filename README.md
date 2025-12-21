@@ -1,148 +1,70 @@
 # AprilTag Tests
 
-Framework for testing and comparing different AprilTag detector implementations across versions and libraries.
+Framework for testing and comparing AprilTag detector implementations.
 
-## Directory Structure
+## Structure
 
-- `schema/` - JSON Schema and CLI specification for detector programs
-- `data/` - Test images containing AprilTags
-- `detectors/` - Detector implementations (e.g., `apriltag-3.4.5/`)
-- `results/` - Detection output (gitignored)
+- `schema/` - JSON schema and CLI specification
+- `data/` - Test images
+- `detectors/` - Detector implementations
+- `results/` - Detection output (tracked in git)
+- `ground-truth/` - Ground truth annotations
 
-## Detection Format
-
-All detectors output JSON results conforming to the schema in `schema/detection-format.json`. Each detection includes:
-- `tag_id` - Numeric ID of the detected tag
-- `tag_family` - Family name (e.g., "tag36h11", "tag25h9")
-- `corners` - Array of 4 corner positions (x, y) in pixels, counter-clockwise from bottom-left
-
-See `schema/README.md` for full CLI specification.
-
-## Running Detectors
-
-### AprilTag 3.4.5
+## Quick Start
 
 ```bash
-# Run on data/ folder, output to results/apriltag-3.4.5/
-nix run .#run-apriltag-3-4-5
-
-# Run on custom folders
-nix run .#run-apriltag-3-4-5 custom-input/ custom-output/
-```
-
-The detector supports all AprilTag families: tag36h11, tag25h9, tag16h5, tagCircle21h7, tagCircle49h12, tagCustom48h12, tagStandard41h12, tagStandard52h13.
-
-### AprilTags Kaess (3aea96d)
-
-Michael Kaess' AprilTags library (commit 3aea96d).
-
-```bash
-# Run on data/ folder, output to results/apriltags-kaess-3aea96d/
-nix run .#run-apriltags-kaess-3aea96d
-
-# Run on custom folders
-nix run .#run-apriltags-kaess-3aea96d custom-input/ custom-output/
-```
-
-The detector supports tag families: tag36h11, tag36h9, tag25h9, tag25h7, tag16h5.
-
-### Kornia AprilTag (0.1.10)
-
-Kornia-rs AprilTag library (Rust implementation).
-
-```bash
-# Run on data/ folder, output to results/kornia-apriltag-0.1.10/
-nix run .#run-kornia-apriltag-0-1-10
-
-# Run on custom folders
-nix run .#run-kornia-apriltag-0-1-10 custom-input/ custom-output/
-```
-
-The detector supports tag families: tag36h11, tag36h10, tag25h9, tag16h5, tagCircle21h7, tagCircle49h12, tagCustom48h12, tagStandard41h12, tagStandard52h13.
-
-### Kornia-rs AprilTag (apriltag-experiment branch)
-
-Kornia-rs AprilTag library from the apriltag-experiment branch.
-
-```bash
-# Run on data/ folder, output to results/kornia-rs-apriltag-experiment/
-nix run .#run-kornia-rs-apriltag-experiment
-
-# Run on custom folders
-nix run .#run-kornia-rs-apriltag-experiment custom-input/ custom-output/
-```
-
-The detector supports tag families: tag36h11, tag36h10, tag25h9, tag16h5, tagCircle21h7, tagCircle49h12, tagCustom48h12, tagStandard41h12, tagStandard52h13.
-
-### Run All Detectors
-
-Run all detectors in sequence on the same input:
-
-```bash
-# Run all detectors on data/ folder, output to results/
+# Run all detectors
 nix run .#run-all-detectors
 
-# Run on custom folders
-nix run .#run-all-detectors custom-input/ custom-results/
-```
-
-This will run AprilTag 3.4.5, AprilTags Kaess (3aea96d), Kornia AprilTag (0.1.10), and Kornia-rs AprilTag (apriltag-experiment) detectors sequentially.
-
-## Ground Truth Annotation
-
-### edit-ground-truth
-
-Web-based tool for creating and editing ground truth annotations.
-
-```bash
-nix run .#edit-ground-truth
-# Open http://localhost:3000 in your browser
-```
-
-Features:
-- Visual annotation with precise corner placement
-- Magnified view for accuracy
-- Import detections from detector results
-- Filter by tag family when importing
-- Save to `ground-truth/` folder
-
-See `tools/ground-truth-editor/README.md` for details.
-
-## Comparison Reports
-
-### compare-detectors
-
-Generate an HTML report comparing detector results against ground truth annotations.
-
-```bash
-# Generate report using default paths
+# Generate comparison report
 nix run .#compare-detectors
 
-# Specify custom paths
-nix run .#compare-detectors ground-truth/ results/ my-report.html
+# Create ground truth annotations
+nix run .#edit-ground-truth
 ```
 
-The report includes:
-- **Summary Statistics**: Precision, recall, F1 score for each detector
-- **Per-Image Analysis**: Shows missed detections and false positives for each image
-- **Family Breakdown**: Missed detections and false positives grouped by tag family
+## Detectors
 
-Output: `comparison-report.html` (open in browser)
+All detectors follow the same interface: `--input <dir> --output <dir>`
 
-## Utilities
+| Command | Description |
+|---------|-------------|
+| `nix run .#run-apriltag-3-4-5` | AprilTag 3.4.5 (official C implementation) |
+| `nix run .#run-apriltags-kaess-3aea96d` | Michael Kaess' AprilTags library |
+| `nix run .#run-kornia-apriltag-0-1-10` | Kornia-rs AprilTag 0.1.10 |
+| `nix run .#run-kornia-rs-apriltag-experiment` | Kornia-rs apriltag-experiment branch |
+| `nix run .#run-all-detectors` | Run all detectors sequentially |
 
-### strip-exif
+## Tools
 
-Strips all EXIF metadata from images in `data/` to remove identifying information (GPS coordinates, timestamps, camera serial numbers, etc.).
+**Ground Truth Editor** - Web UI for creating annotations
+```bash
+nix run .#edit-ground-truth  # Opens at http://localhost:5173
+```
 
+**Comparison Report** - Compare detectors against ground truth
+```bash
+nix run .#compare-detectors  # Generates comparison-report.html
+```
+
+**Strip EXIF** - Remove metadata from images
 ```bash
 nix run .#strip-exif
 ```
 
-## Adding New Detectors
+## CI/CD
 
-1. Create directory: `detectors/detector-name/`
-2. Implement detector following `schema/README.md` CLI specification
-3. Add package definition to `flake.nix`
-4. Add wrapper script app to `flake.nix`
-5. Test against images in `data/`
+GitHub Actions automatically:
+- Runs all detectors on every push
+- Commits updated results if changed
+- Generates comparison report
+- Publishes report to GitHub Pages
+
+Setup: Repository Settings → Pages → Source: "GitHub Actions"
+
+## Adding Detectors
+
+1. Create `detectors/detector-name/`
+2. Implement CLI per `schema/README.md`
+3. Add package to `flake.nix`
+4. Add run script to `flake.nix`
