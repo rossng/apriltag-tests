@@ -3,8 +3,20 @@ name: Detect and Compare AprilTags
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'detectors/**'
+      - 'data/**'
+      - 'flake.nix'
+      - 'flake.lock'
+      - '.github/workflows/detect-and-compare.yml'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'detectors/**'
+      - 'data/**'
+      - 'flake.nix'
+      - 'flake.lock'
+      - '.github/workflows/detect-and-compare.yml'
   workflow_dispatch:
 
 # Required for GitHub Pages deployment

@@ -47,7 +47,7 @@
           };
 
           nativeBuildInputs = [ pkgs.cmake pkgs.pkg-config ];
-          buildInputs = [ pkgs.opencv pkgs.eigen ];
+          buildInputs = [ pkgs.opencv pkgs.eigen ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [ pkgs.libv4l ];
 
           # Fix CMake minimum version requirement and compatibility issues
           postPatch = ''
