@@ -529,7 +529,7 @@ function main() {
 
   let groundTruthDir = 'ground-truth';
   let resultsDir = 'results';
-  let detectorNames = ['apriltag-3.4.5', 'apriltags-kaess'];
+  let detectorNames = ['apriltag-3.4.5', 'apriltags-kaess-3aea96d', 'kornia-apriltag-0.1.10'];
   let outputPath = 'comparison-report.html';
 
   // Simple argument parsing

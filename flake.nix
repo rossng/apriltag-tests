@@ -184,6 +184,30 @@
             --output "$OUTPUT_DIR"
         '';
 
+        # Script to run all detectors in sequence
+        run-all-detectors = pkgs.writeShellScriptBin "run-all-detectors" ''
+          INPUT_DIR="''${1:-data}"
+          RESULTS_DIR="''${2:-results}"
+
+          echo "Running all detectors on $INPUT_DIR"
+          echo "Results will be saved to $RESULTS_DIR"
+          echo ""
+
+          # Run AprilTag 3.4.5
+          ${run-apriltag-3-4-5}/bin/run-apriltag-3-4-5 "$INPUT_DIR" "$RESULTS_DIR/apriltag-3.4.5"
+          echo ""
+
+          # Run AprilTags Kaess
+          ${run-apriltags-kaess-3aea96d}/bin/run-apriltags-kaess-3aea96d "$INPUT_DIR" "$RESULTS_DIR/apriltags-kaess-3aea96d"
+          echo ""
+
+          # Run Kornia AprilTag
+          ${run-kornia-apriltag-0-1-10}/bin/run-kornia-apriltag-0-1-10 "$INPUT_DIR" "$RESULTS_DIR/kornia-apriltag-0.1.10"
+          echo ""
+
+          echo "All detectors completed!"
+        '';
+
         # Script to run ground truth editor
         edit-ground-truth = pkgs.writeShellScriptBin "edit-ground-truth" ''
           echo "Starting Ground Truth Editor..."
@@ -249,14 +273,14 @@
           ${pkgs.nodejs}/bin/node dist/compare.js \
             --ground-truth "../../$GROUND_TRUTH_DIR" \
             --results "../../$RESULTS_DIR" \
-            --detectors apriltag-3.4.5 apriltags-kaess-3aea96d \
+            --detectors apriltag-3.4.5 apriltags-kaess-3aea96d kornia-apriltag-0.1.10 \
             --output "../../$OUTPUT_FILE"
         '';
 
       in
       {
         packages = {
-          inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5 edit-ground-truth apriltags-kaess-3aea96d apriltags-kaess-3aea96d-detector run-apriltags-kaess-3aea96d kornia-apriltag-0-1-10-detector run-kornia-apriltag-0-1-10 compare-detectors;
+          inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5 edit-ground-truth apriltags-kaess-3aea96d apriltags-kaess-3aea96d-detector run-apriltags-kaess-3aea96d kornia-apriltag-0-1-10-detector run-kornia-apriltag-0-1-10 run-all-detectors compare-detectors;
         };
 
         apps = {
@@ -275,6 +299,10 @@
           run-kornia-apriltag-0-1-10 = {
             type = "app";
             program = "${run-kornia-apriltag-0-1-10}/bin/run-kornia-apriltag-0-1-10";
+          };
+          run-all-detectors = {
+            type = "app";
+            program = "${run-all-detectors}/bin/run-all-detectors";
           };
           edit-ground-truth = {
             type = "app";
@@ -302,6 +330,7 @@
             echo "  run-apriltag-3-4-5              - Run AprilTag 3.4.5 detector on data/"
             echo "  run-apriltags-kaess-3aea96d     - Run AprilTags Kaess (3aea96d) detector on data/"
             echo "  run-kornia-apriltag-0-1-10      - Run Kornia AprilTag (0.1.10) detector on data/"
+            echo "  run-all-detectors               - Run all detectors in sequence"
             echo "  edit-ground-truth               - Open ground truth annotation tool"
             echo "  compare-detectors               - Generate comparison report vs ground truth"
           '';

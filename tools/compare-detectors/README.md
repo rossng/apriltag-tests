@@ -23,7 +23,7 @@ npm run build
 node dist/compare.js \
   --ground-truth ../../ground-truth/ \
   --results ../../results/ \
-  --detectors apriltag-3.4.5 apriltags-kaess-3aea96d \
+  --detectors apriltag-3.4.5 apriltags-kaess-3aea96d kornia-apriltag-0.1.10 \
   --output ../../comparison-report.html
 ```
 
@@ -31,7 +31,7 @@ node dist/compare.js \
 
 - `--ground-truth <dir>` - Directory containing ground truth JSON files (default: `ground-truth`)
 - `--results <dir>` - Directory containing detector result subdirectories (default: `results`)
-- `--detectors <name1> <name2> ...` - List of detector names to compare (default: `apriltag-3.4.5 apriltags-kaess-3aea96d`)
+- `--detectors <name1> <name2> ...` - List of detector names to compare (default: `apriltag-3.4.5 apriltags-kaess-3aea96d kornia-apriltag-0.1.10`)
 - `--output <file>` - Output HTML file path (default: `comparison-report.html`)
 
 ## Report Contents
