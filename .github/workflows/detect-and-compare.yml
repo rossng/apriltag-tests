@@ -81,6 +81,11 @@ jobs:
       run: |
         mkdir -p _site
         cp comparison-report.html _site/index.html
+        # Copy source images to _site for client-side visualization
+        if [ -d "data" ]; then
+          mkdir -p _site/data
+          cp data/*.jpg data/*.png _site/data/ 2>/dev/null || true
+        fi
 
     - name: Upload comparison report as artifact
       uses: actions/upload-artifact@v4

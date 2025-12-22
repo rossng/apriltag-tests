@@ -3,7 +3,7 @@
  * Compare detector results against ground truth and generate HTML report.
  */
 
-import { readFileSync, readdirSync, writeFileSync, existsSync, statSync } from 'fs';
+import { readFileSync, readdirSync, writeFileSync, existsSync } from 'fs';
 import { join, basename } from 'path';
 
 interface Corner {
@@ -231,11 +231,15 @@ function computeSummary(
   return summaries;
 }
 
+
 function generateHtmlReport(
   results: Map<string, ImageResult>,
   summaries: Map<string, Summary>,
   detectorNames: string[],
-  outputPath: string
+  outputPath: string,
+  dataDir: string,
+  groundTruthDir: string,
+  resultsDir: string
 ): void {
   let html = `<!DOCTYPE html>
 <html lang="en">
@@ -384,6 +388,54 @@ function generateHtmlReport(
             padding: 4px 0;
             color: #666;
         }
+        .image-viewer {
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+        }
+        .canvas-container canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .viewer-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .viewer-button {
+            padding: 10px 20px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .viewer-button:hover {
+            border-color: #2196F3;
+            background: #E3F2FD;
+        }
+        .viewer-button.active {
+            border-color: #2196F3;
+            background: #2196F3;
+            color: white;
+        }
+        .no-visualization {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -457,6 +509,20 @@ function generateHtmlReport(
     html += `<div class="image-section">\n`;
     html += `<h3>${imageName}</h3>\n`;
 
+    // Image viewer with controls
+    const imageId = imageName.replace(/[^a-zA-Z0-9]/g, '_');
+    html += `<div class="image-viewer">\n`;
+    html += `<div class="viewer-controls">\n`;
+    html += `<button class="viewer-button active" onclick="showVisualization('${imageId}', 'ground-truth')">Ground Truth</button>\n`;
+    for (const detectorName of detectorNames) {
+      html += `<button class="viewer-button" onclick="showVisualization('${imageId}', '${detectorName}')">${detectorName}</button>\n`;
+    }
+    html += `</div>\n`;
+    html += `<div id="viewer-${imageId}" class="canvas-container">\n`;
+    html += `<canvas id="canvas-${imageId}" style="max-width: 100%; height: auto;"></canvas>\n`;
+    html += `</div>\n`;
+    html += `</div>\n`;
+
     // Ground truth tags
     html += '<div class="tag-list">\n';
     html += '<span class="tag-list-label">Ground Truth:</span>\n';
@@ -516,6 +582,161 @@ function generateHtmlReport(
     html += '</div>\n';
   }
 
+  // Embed detection data and visualization JavaScript
+  html += '<script>\n';
+
+  // Embed all detection data
+  html += 'const detectionData = {\n';
+  for (const [imageName, result] of Array.from(results.entries()).sort()) {
+    const imageId = imageName.replace(/[^a-zA-Z0-9]/g, '_');
+    html += `  '${imageId}': {\n`;
+    html += `    imagePath: 'data/${imageName}',\n`;
+
+    // Ground truth detections
+    const gtFile = join(groundTruthDir, imageName.replace(/\.(jpg|png)$/, '.json'));
+    const gtData = loadDetections(gtFile);
+    html += `    'ground-truth': ${JSON.stringify(gtData?.detections || [])},\n`;
+
+    // Detector detections
+    for (const detectorName of detectorNames) {
+      const detectorFile = join(resultsDir, detectorName, imageName.replace(/\.(jpg|png)$/, '.json'));
+      const detectorData = loadDetections(detectorFile);
+      html += `    '${detectorName}': ${JSON.stringify(detectorData?.detections || [])},\n`;
+    }
+
+    html += `  },\n`;
+  }
+  html += '};\n\n';
+
+  // Add canvas drawing functions
+  html += `
+function drawDetection(ctx, detection, color) {
+  const corners = detection.corners;
+  const tagId = detection.tag_id;
+  const tagFamily = detection.tag_family;
+
+  // Draw the quadrilateral
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(corners[0].x, corners[0].y);
+  for (let i = 1; i < corners.length; i++) {
+    ctx.lineTo(corners[i].x, corners[i].y);
+  }
+  ctx.closePath();
+  ctx.stroke();
+
+  // Draw corner circles
+  ctx.fillStyle = color;
+  for (const corner of corners) {
+    ctx.beginPath();
+    ctx.arc(corner.x, corner.y, 5, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  // Calculate center for label
+  const centerX = corners.reduce((sum, c) => sum + c.x, 0) / corners.length;
+  const centerY = corners.reduce((sum, c) => sum + c.y, 0) / corners.length;
+
+  // Create label
+  const label = tagFamily + ':' + tagId;
+
+  // Set font
+  ctx.font = 'bold 16px Arial';
+  const metrics = ctx.measureText(label);
+  const textWidth = metrics.width;
+  const textHeight = 16;
+
+  // Draw background rectangle
+  const padding = 5;
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+  ctx.fillRect(
+    centerX - textWidth / 2 - padding,
+    centerY - textHeight / 2 - padding,
+    textWidth + padding * 2,
+    textHeight + padding * 2
+  );
+
+  // Draw text
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, centerX, centerY);
+}
+
+function drawVisualization(imageId, detector) {
+  const canvas = document.getElementById('canvas-' + imageId);
+  const ctx = canvas.getContext('2d');
+  const data = detectionData[imageId];
+
+  if (!data) return;
+
+  const detections = data[detector];
+  const color = detector === 'ground-truth' ? '#00FF00' : '#FFA500';
+  const title = detector === 'ground-truth' ? 'Ground Truth' : detector;
+
+  // Load image
+  const img = new Image();
+  img.onload = function() {
+    // Set canvas size to match image
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    // Draw the image
+    ctx.drawImage(img, 0, 0);
+
+    // Draw all detections
+    for (const detection of detections) {
+      drawDetection(ctx, detection, color);
+    }
+
+    // Add title
+    ctx.font = 'bold 24px Arial';
+    const titleMetrics = ctx.measureText(title);
+    const titleWidth = titleMetrics.width;
+    const titleHeight = 24;
+
+    // Draw title background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(10, 10, titleWidth + 20, titleHeight + 20);
+
+    // Draw title text
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(title, 20, 20);
+  };
+
+  img.src = data.imagePath;
+}
+
+function showVisualization(imageId, detector) {
+  const viewer = document.getElementById('viewer-' + imageId);
+  const buttons = viewer.parentElement.querySelectorAll('.viewer-button');
+
+  // Update active button
+  buttons.forEach(btn => {
+    if (btn.textContent.includes(detector) ||
+        (detector === 'ground-truth' && btn.textContent === 'Ground Truth')) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  // Redraw visualization
+  drawVisualization(imageId, detector);
+}
+
+// Initialize all visualizations on page load
+window.addEventListener('load', function() {
+  for (const imageId in detectionData) {
+    drawVisualization(imageId, 'ground-truth');
+  }
+});
+</script>
+`;
+
   html += `
 </body>
 </html>
@@ -524,11 +745,12 @@ function generateHtmlReport(
   writeFileSync(outputPath, html, 'utf-8');
 }
 
-function main() {
+async function main() {
   const args = process.argv.slice(2);
 
   let groundTruthDir = 'ground-truth';
   let resultsDir = 'results';
+  let dataDir = 'data';
   let detectorNames = ['apriltag-3.4.5', 'apriltags-kaess-3aea96d', 'kornia-apriltag-0.1.10'];
   let outputPath = 'comparison-report.html';
 
@@ -538,6 +760,8 @@ function main() {
       groundTruthDir = args[++i];
     } else if (args[i] === '--results' && i + 1 < args.length) {
       resultsDir = args[++i];
+    } else if (args[i] === '--data' && i + 1 < args.length) {
+      dataDir = args[++i];
     } else if (args[i] === '--detectors' && i + 1 < args.length) {
       detectorNames = [];
       while (i + 1 < args.length && !args[i + 1].startsWith('--')) {
@@ -575,9 +799,12 @@ function main() {
     console.log(`  False Positives:  ${stats.falsePositives}`);
   }
 
-  generateHtmlReport(results, summaries, detectorNames, outputPath);
+  generateHtmlReport(results, summaries, detectorNames, outputPath, dataDir, groundTruthDir, resultsDir);
 
   console.log(`\n✓ Report generated: ${join(process.cwd(), outputPath)}`);
 }
 
-main();
+main().catch(err => {
+  console.error('Error:', err);
+  process.exit(1);
+});

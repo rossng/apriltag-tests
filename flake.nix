@@ -294,14 +294,18 @@
 
         # Script to generate comparison report
         compare-detectors = pkgs.writeShellScriptBin "compare-detectors" ''
+          set -e
+
           GROUND_TRUTH_DIR="''${1:-ground-truth}"
           RESULTS_DIR="''${2:-results}"
-          OUTPUT_FILE="''${3:-comparison-report.html}"
+          DATA_DIR="''${3:-data}"
+          OUTPUT_FILE="''${4:-comparison-report.html}"
 
           echo "Generating detector comparison report..."
-          echo "  Ground Truth: $GROUND_TRUTH_DIR"
-          echo "  Results:      $RESULTS_DIR"
-          echo "  Output:       $OUTPUT_FILE"
+          echo "  Ground Truth:    $GROUND_TRUTH_DIR"
+          echo "  Results:         $RESULTS_DIR"
+          echo "  Data:            $DATA_DIR"
+          echo "  Output:          $OUTPUT_FILE"
           echo ""
 
           cd tools/compare-detectors
@@ -321,6 +325,7 @@
           ${pkgs.nodejs}/bin/node dist/compare.js \
             --ground-truth "../../$GROUND_TRUTH_DIR" \
             --results "../../$RESULTS_DIR" \
+            --data "../../$DATA_DIR" \
             --detectors apriltag-3.4.5 apriltags-kaess-3aea96d kornia-apriltag-0.1.10 kornia-rs-apriltag-experiment \
             --output "../../$OUTPUT_FILE"
         '';
