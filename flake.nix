@@ -163,6 +163,35 @@
           };
         };
 
+        # Kornia-rs AprilTag detector program from centred-coordinates branch
+        kornia-rs-apriltag-centred-coordinates-detector = pkgs.rustPlatform.buildRustPackage {
+          pname = "kornia-rs-apriltag-centred-coordinates-detector";
+          version = "1.0.0";
+
+          src = ./detectors/kornia-rs-apriltag-centred-coordinates;
+
+          cargoLock = {
+            lockFile = ./detectors/kornia-rs-apriltag-centred-coordinates/Cargo.lock;
+            outputHashes = {
+              "kornia-apriltag-0.1.11-rc.1" = "sha256-3D9vyslsmJv2UwZA2jZCDHfIRkSMjMeq9Av9pryx998=";
+            };
+          };
+
+          nativeBuildInputs = [ pkgs.pkg-config ];
+          buildInputs = [ pkgs.libjpeg pkgs.libpng ];
+
+          installPhase = ''
+            mkdir -p $out/bin
+            cp target/*/release/kornia-apriltag-centred-coordinates-detector $out/bin/kornia-rs-apriltag-centred-coordinates-detector
+          '';
+
+          meta = {
+            description = "AprilTag detector using kornia-rs centred-coordinates branch";
+            homepage = "https://github.com/rossng/kornia-rs";
+            license = pkgs.lib.licenses.asl20;
+          };
+        };
+
         # Script to strip EXIF data from images in data/ folder
         strip-exif = pkgs.writeShellScriptBin "strip-exif" ''
           ${pkgs.exiftool}/bin/exiftool -all= -overwrite_original -r data
@@ -228,6 +257,21 @@
             --output "$OUTPUT_DIR"
         '';
 
+        # Script to run Kornia-rs AprilTag detector (centred-coordinates branch) on data/ folder
+        run-kornia-rs-apriltag-centred-coordinates = pkgs.writeShellScriptBin "run-kornia-rs-apriltag-centred-coordinates" ''
+          INPUT_DIR="''${1:-data}"
+          OUTPUT_DIR="''${2:-results/kornia-rs-apriltag-centred-coordinates}"
+
+          echo "Running Kornia-rs AprilTag (centred-coordinates) detector"
+          echo "  Input:  $INPUT_DIR"
+          echo "  Output: $OUTPUT_DIR"
+          echo ""
+
+          ${kornia-rs-apriltag-centred-coordinates-detector}/bin/kornia-rs-apriltag-centred-coordinates-detector \
+            --input "$INPUT_DIR" \
+            --output "$OUTPUT_DIR"
+        '';
+
         # Script to run all detectors in sequence
         run-all-detectors = pkgs.writeShellScriptBin "run-all-detectors" ''
           INPUT_DIR="''${1:-data}"
@@ -251,6 +295,10 @@
 
           # Run Kornia-rs AprilTag (apriltag-experiment)
           ${run-kornia-rs-apriltag-experiment}/bin/run-kornia-rs-apriltag-experiment "$INPUT_DIR" "$RESULTS_DIR/kornia-rs-apriltag-experiment"
+          echo ""
+
+          # Run Kornia-rs AprilTag (centred-coordinates)
+          ${run-kornia-rs-apriltag-centred-coordinates}/bin/run-kornia-rs-apriltag-centred-coordinates "$INPUT_DIR" "$RESULTS_DIR/kornia-rs-apriltag-centred-coordinates"
           echo ""
 
           echo "All detectors completed!"
@@ -326,14 +374,14 @@
             --ground-truth "../../$GROUND_TRUTH_DIR" \
             --results "../../$RESULTS_DIR" \
             --data "../../$DATA_DIR" \
-            --detectors apriltag-3.4.5 apriltags-kaess-3aea96d kornia-apriltag-0.1.10 kornia-rs-apriltag-experiment \
+            --detectors apriltag-3.4.5 apriltags-kaess-3aea96d kornia-apriltag-0.1.10 kornia-rs-apriltag-experiment kornia-rs-apriltag-centred-coordinates \
             --output "../../$OUTPUT_FILE"
         '';
 
       in
       {
         packages = {
-          inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5 edit-ground-truth apriltags-kaess-3aea96d apriltags-kaess-3aea96d-detector run-apriltags-kaess-3aea96d kornia-apriltag-0-1-10-detector run-kornia-apriltag-0-1-10 kornia-rs-apriltag-experiment-detector run-kornia-rs-apriltag-experiment run-all-detectors compare-detectors;
+          inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5 edit-ground-truth apriltags-kaess-3aea96d apriltags-kaess-3aea96d-detector run-apriltags-kaess-3aea96d kornia-apriltag-0-1-10-detector run-kornia-apriltag-0-1-10 kornia-rs-apriltag-experiment-detector run-kornia-rs-apriltag-experiment kornia-rs-apriltag-centred-coordinates-detector run-kornia-rs-apriltag-centred-coordinates run-all-detectors compare-detectors;
         };
 
         apps = {
@@ -356,6 +404,10 @@
           run-kornia-rs-apriltag-experiment = {
             type = "app";
             program = "${run-kornia-rs-apriltag-experiment}/bin/run-kornia-rs-apriltag-experiment";
+          };
+          run-kornia-rs-apriltag-centred-coordinates = {
+            type = "app";
+            program = "${run-kornia-rs-apriltag-centred-coordinates}/bin/run-kornia-rs-apriltag-centred-coordinates";
           };
           run-all-detectors = {
             type = "app";
@@ -384,13 +436,14 @@
             echo "  exiftool <file>           - Inspect EXIF data"
             echo ""
             echo "Available apps (use 'nix run .#<app>'):"
-            echo "  run-apriltag-3-4-5                 - Run AprilTag 3.4.5 detector on data/"
-            echo "  run-apriltags-kaess-3aea96d        - Run AprilTags Kaess (3aea96d) detector on data/"
-            echo "  run-kornia-apriltag-0-1-10         - Run Kornia AprilTag (0.1.10) detector on data/"
-            echo "  run-kornia-rs-apriltag-experiment  - Run Kornia-rs AprilTag (apriltag-experiment) detector on data/"
-            echo "  run-all-detectors                  - Run all detectors in sequence"
-            echo "  edit-ground-truth                  - Open ground truth annotation tool"
-            echo "  compare-detectors                  - Generate comparison report vs ground truth"
+            echo "  run-apriltag-3-4-5                       - Run AprilTag 3.4.5 detector on data/"
+            echo "  run-apriltags-kaess-3aea96d              - Run AprilTags Kaess (3aea96d) detector on data/"
+            echo "  run-kornia-apriltag-0-1-10               - Run Kornia AprilTag (0.1.10) detector on data/"
+            echo "  run-kornia-rs-apriltag-experiment        - Run Kornia-rs AprilTag (apriltag-experiment) detector on data/"
+            echo "  run-kornia-rs-apriltag-centred-coordinates - Run Kornia-rs AprilTag (centred-coordinates) detector on data/"
+            echo "  run-all-detectors                        - Run all detectors in sequence"
+            echo "  edit-ground-truth                        - Open ground truth annotation tool"
+            echo "  compare-detectors                        - Generate comparison report vs ground truth"
           '';
         };
       }
