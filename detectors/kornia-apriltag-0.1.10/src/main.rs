@@ -63,18 +63,11 @@ fn get_supported_families() -> Vec<(String, TagFamilyKind)> {
     ]
 }
 
-fn process_image(
+fn detect_in_image(
     image_path: &Path,
-    families: &[(String, TagFamilyKind)],
-) -> Result<DetectionResult> {
-    let image_name = image_path
-        .file_name()
-        .and_then(|n| n.to_str())
-        .context("Invalid image filename")?
-        .to_string();
-
-    println!("Processing: {}", image_name);
-
+    family_kind: &TagFamilyKind,
+    img_size: ImageSize,
+) -> Result<Vec<Detection>> {
     // Load image as RGB8
     let img_rgb: Image<u8, 3, CpuAllocator> = read_image_jpeg_rgb8(image_path)
         .context("Failed to load image")?;
@@ -89,68 +82,46 @@ fn process_image(
     // Convert back to u8 for the detector
     let img_gray: Image<u8, 1, CpuAllocator> = img_gray_f32.cast_and_scale::<u8>(255u8)?;
 
-    let img_size = ImageSize {
-        width: img_gray.width(),
-        height: img_gray.height(),
-    };
+    // Create a fresh decoder for this image
+    let config = DecodeTagsConfig::new(vec![family_kind.clone()]);
+    let mut decoder = AprilTagDecoder::new(config, img_size)?;
 
-    let mut all_detections = Vec::new();
-    let mut family_counts: HashMap<String, usize> = HashMap::new();
+    // Detect tags
+    let detections = decoder.decode(&img_gray)
+        .context(format!("Failed to decode tags for family {:?}", family_kind))?;
 
-    // Process each family
-    for (family_name, family_kind) in families {
-        // Create decoder for this family
-        let config = DecodeTagsConfig::new(vec![family_kind.clone()]);
+    // Convert detections to our format
+    let mut result_detections = Vec::new();
+    for det in detections {
+        // Corners are in order: Bottom-left, Bottom-right, Top-right, Top-left
+        // This matches our required format (counter-clockwise from bottom-left)
+        let corners = vec![
+            Corner {
+                x: det.quad.corners[0].x,
+                y: det.quad.corners[0].y,
+            },
+            Corner {
+                x: det.quad.corners[1].x,
+                y: det.quad.corners[1].y,
+            },
+            Corner {
+                x: det.quad.corners[2].x,
+                y: det.quad.corners[2].y,
+            },
+            Corner {
+                x: det.quad.corners[3].x,
+                y: det.quad.corners[3].y,
+            },
+        ];
 
-        let mut decoder = AprilTagDecoder::new(config, img_size)?;
-
-        // Detect tags
-        let detections = decoder.decode(&img_gray)
-            .context(format!("Failed to decode tags for family {}", family_name))?;
-
-        let count = detections.len();
-        family_counts.insert(family_name.clone(), count);
-
-        // Convert detections to our format
-        for det in detections {
-            // Corners are in order: Bottom-left, Bottom-right, Top-right, Top-left
-            // This matches our required format (counter-clockwise from bottom-left)
-            let corners = vec![
-                Corner {
-                    x: det.quad.corners[0].x,
-                    y: det.quad.corners[0].y,
-                },
-                Corner {
-                    x: det.quad.corners[1].x,
-                    y: det.quad.corners[1].y,
-                },
-                Corner {
-                    x: det.quad.corners[2].x,
-                    y: det.quad.corners[2].y,
-                },
-                Corner {
-                    x: det.quad.corners[3].x,
-                    y: det.quad.corners[3].y,
-                },
-            ];
-
-            all_detections.push(Detection {
-                tag_id: det.id,
-                tag_family: tag_family_to_string(&det.tag_family_kind),
-                corners,
-            });
-        }
+        result_detections.push(Detection {
+            tag_id: det.id,
+            tag_family: tag_family_to_string(&det.tag_family_kind),
+            corners,
+        });
     }
 
-    // Print summary
-    for (family_name, count) in &family_counts {
-        println!("  Detecting {}... found {}", family_name, count);
-    }
-
-    Ok(DetectionResult {
-        image: image_name,
-        detections: all_detections,
-    })
+    Ok(result_detections)
 }
 
 fn main() -> Result<()> {
@@ -205,8 +176,8 @@ fn main() -> Result<()> {
 
     let families = get_supported_families();
 
-    // Process all images
-    let mut processed_count = 0;
+    // Collect all image paths first
+    let mut image_paths = Vec::new();
     for entry in fs::read_dir(input_path)? {
         let entry = entry?;
         let path = entry.path();
@@ -221,11 +192,61 @@ fn main() -> Result<()> {
             .unwrap_or("")
             .to_lowercase();
 
-        if ext != "jpg" && ext != "jpeg" && ext != "png" {
-            continue;
+        if ext == "jpg" || ext == "jpeg" || ext == "png" {
+            image_paths.push(path);
         }
+    }
 
-        let result = process_image(&path, &families)?;
+    if image_paths.is_empty() {
+        println!("No images found in {}", input_dir);
+        return Ok(());
+    }
+
+    // Get the size of the first image to create decoders
+    let first_img = read_image_jpeg_rgb8(&image_paths[0])
+        .context("Failed to load first image")?;
+    let img_size = ImageSize {
+        width: first_img.width(),
+        height: first_img.height(),
+    };
+
+    // Store all detections per image (image_path -> detections)
+    let mut all_image_detections: HashMap<String, Vec<Detection>> = HashMap::new();
+
+    // Process each image
+    for image_path in &image_paths {
+        let path_str = image_path.to_string_lossy().to_string();
+
+        // Process all families for this image
+        for (family_name, family_kind) in &families {
+            println!("Processing {} for family {}...", image_path.display(), family_name);
+
+            let detections = detect_in_image(image_path, family_kind, img_size)?;
+
+            all_image_detections
+                .entry(path_str.clone())
+                .or_insert_with(Vec::new)
+                .extend(detections);
+        }
+    }
+
+    // Write output files
+    let mut processed_count = 0;
+    for path in &image_paths {
+        let image_name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .context("Invalid image filename")?;
+
+        let path_str = path.to_string_lossy().to_string();
+        let detections = all_image_detections.get(&path_str).cloned().unwrap_or_default();
+
+        println!("Writing results for {}: {} detections", image_name, detections.len());
+
+        let result = DetectionResult {
+            image: image_name.to_string(),
+            detections,
+        };
 
         // Write output JSON
         let output_filename = path

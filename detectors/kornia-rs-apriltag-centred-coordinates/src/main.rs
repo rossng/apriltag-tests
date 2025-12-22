@@ -65,8 +65,8 @@ fn get_supported_families() -> Vec<(String, TagFamilyKind)> {
 
 fn detect_in_image(
     image_path: &Path,
-    family_name: &str,
-    decoder: &mut AprilTagDecoder,
+    family_kind: &TagFamilyKind,
+    img_size: ImageSize,
 ) -> Result<Vec<Detection>> {
     // Load image as RGB8
     let img_rgb = read_image_jpeg_rgb8(image_path)
@@ -76,9 +76,13 @@ fn detect_in_image(
     let mut img_gray = Image::<u8, 1, CpuAllocator>::from_size_val(img_rgb.size(), 0, CpuAllocator)?;
     gray_from_rgb_u8(&img_rgb, &mut img_gray)?;
 
+    // Create a fresh decoder for this image
+    let config = DecodeTagsConfig::new(vec![family_kind.clone()]);
+    let mut decoder = AprilTagDecoder::new(config, img_size)?;
+
     // Detect tags
     let detections = decoder.decode(&img_gray)
-        .context(format!("Failed to decode tags for family {}", family_name))?;
+        .context(format!("Failed to decode tags for family {:?}", family_kind))?;
 
     // Convert detections to our format
     let mut result_detections = Vec::new();
@@ -203,21 +207,18 @@ fn main() -> Result<()> {
     // Store all detections per image (image_path -> detections)
     let mut all_image_detections: HashMap<String, Vec<Detection>> = HashMap::new();
 
-    // Process one family at a time across all images
-    for (family_name, family_kind) in &families {
-        println!("Processing family {}...", family_name);
+    // Process each image
+    for image_path in &image_paths {
+        let path_str = image_path.to_string_lossy().to_string();
 
-        // Create decoder for this family
-        let config = DecodeTagsConfig::new(vec![family_kind.clone()]);
-        let mut decoder = AprilTagDecoder::new(config, img_size)?;
+        // Process all families for this image
+        for (family_name, family_kind) in &families {
+            println!("Processing {} for family {}...", image_path.display(), family_name);
 
-        // Run this decoder on all images
-        for image_path in &image_paths {
-            let detections = detect_in_image(image_path, family_name, &mut decoder)?;
+            let detections = detect_in_image(image_path, family_kind, img_size)?;
 
-            let path_str = image_path.to_string_lossy().to_string();
             all_image_detections
-                .entry(path_str)
+                .entry(path_str.clone())
                 .or_insert_with(Vec::new)
                 .extend(detections);
         }
