@@ -66,7 +66,6 @@ fn get_supported_families() -> Vec<(String, TagFamilyKind)> {
 fn detect_in_image(
     image_path: &Path,
     family_kind: &TagFamilyKind,
-    img_size: ImageSize,
 ) -> Result<Vec<Detection>> {
     // Load image as RGB8
     let img_rgb = read_image_jpeg_rgb8(image_path)
@@ -76,7 +75,11 @@ fn detect_in_image(
     let mut img_gray = Image::<u8, 1, CpuAllocator>::from_size_val(img_rgb.size(), 0, CpuAllocator)?;
     gray_from_rgb_u8(&img_rgb, &mut img_gray)?;
 
-    // Create a fresh decoder for this image
+    // Create a fresh decoder for this image using the ACTUAL image size
+    let img_size = ImageSize {
+        width: img_gray.width(),
+        height: img_gray.height(),
+    };
     let config = DecodeTagsConfig::new(vec![family_kind.clone()]);
     let mut decoder = AprilTagDecoder::new(config, img_size)?;
 
@@ -196,14 +199,6 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    // Get the size of the first image to create decoders
-    let first_img = read_image_jpeg_rgb8(&image_paths[0])
-        .context("Failed to load first image")?;
-    let img_size = ImageSize {
-        width: first_img.width(),
-        height: first_img.height(),
-    };
-
     // Store all detections per image (image_path -> detections)
     let mut all_image_detections: HashMap<String, Vec<Detection>> = HashMap::new();
 
@@ -215,7 +210,7 @@ fn main() -> Result<()> {
         for (family_name, family_kind) in &families {
             println!("Processing {} for family {}...", image_path.display(), family_name);
 
-            let detections = detect_in_image(image_path, family_kind, img_size)?;
+            let detections = detect_in_image(image_path, family_kind)?;
 
             all_image_detections
                 .entry(path_str.clone())
