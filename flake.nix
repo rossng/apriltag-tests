@@ -11,6 +11,56 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
 
+        # Helper function to create a Rust-based kornia detector
+        makeKorniaDetector = { name, src, outputHash ? null, description, sourceBinary ? null }:
+          let
+            binaryName = if sourceBinary != null then sourceBinary else "${name}-detector";
+          in
+          pkgs.rustPlatform.buildRustPackage {
+            pname = "${name}-detector";
+            version = "1.0.0";
+
+            inherit src;
+
+            cargoLock = {
+              lockFile = "${src}/Cargo.lock";
+            } // (if outputHash != null then {
+              outputHashes = {
+                "kornia-apriltag-0.1.11-rc.1" = outputHash;
+              };
+            } else {});
+
+            nativeBuildInputs = [ pkgs.pkg-config ];
+            buildInputs = [ pkgs.libjpeg pkgs.libpng ];
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp target/*/release/${binaryName} $out/bin/${name}-detector
+            '';
+
+            meta = {
+              inherit description;
+              homepage = "https://github.com/kornia/kornia-rs";
+              license = pkgs.lib.licenses.asl20;
+            };
+          };
+
+        # Helper function to create a detector runner script
+        makeDetectorRunner = { name, detector, displayName, defaultOutput }:
+          pkgs.writeShellScriptBin "run-${name}" ''
+            INPUT_DIR="''${1:-data}"
+            OUTPUT_DIR="''${2:-results/${defaultOutput}}"
+
+            echo "Running ${displayName} detector"
+            echo "  Input:  $INPUT_DIR"
+            echo "  Output: $OUTPUT_DIR"
+            echo ""
+
+            ${detector}/bin/${name}-detector \
+              --input "$INPUT_DIR" \
+              --output "$OUTPUT_DIR"
+          '';
+
         # AprilTag 3.4.5 library
         apriltag-3-4-5 = pkgs.stdenv.mkDerivation {
           pname = "apriltag";
@@ -108,215 +158,87 @@
           '';
         };
 
-        # Kornia AprilTag detector program (Rust)
-        kornia-apriltag-0-1-10-detector = pkgs.rustPlatform.buildRustPackage {
-          pname = "kornia-apriltag-0-1-10-detector";
-          version = "1.0.0";
-
+        # Kornia detector programs
+        kornia-apriltag-0-1-10-detector = makeKorniaDetector {
+          name = "kornia-apriltag-0-1-10";
           src = ./detectors/kornia-apriltag-0.1.10;
-
-          cargoLock = {
-            lockFile = ./detectors/kornia-apriltag-0.1.10/Cargo.lock;
-          };
-
-          nativeBuildInputs = [ pkgs.pkg-config ];
-          buildInputs = [ pkgs.libjpeg pkgs.libpng ];
-
-          installPhase = ''
-            mkdir -p $out/bin
-            cp target/*/release/kornia-apriltag-detector $out/bin/kornia-apriltag-0-1-10-detector
-          '';
-
-          meta = {
-            description = "AprilTag detector using kornia-apriltag 0.1.10";
-            homepage = "https://github.com/kornia/kornia-rs";
-            license = pkgs.lib.licenses.asl20;
-          };
+          sourceBinary = "kornia-apriltag-detector";
+          description = "AprilTag detector using kornia-apriltag 0.1.10";
         };
 
-        # Kornia-rs AprilTag detector program from apriltag-experiment branch
-        kornia-rs-apriltag-experiment-detector = pkgs.rustPlatform.buildRustPackage {
-          pname = "kornia-rs-apriltag-experiment-detector";
-          version = "1.0.0";
-
+        kornia-rs-apriltag-experiment-detector = makeKorniaDetector {
+          name = "kornia-rs-apriltag-experiment";
           src = ./detectors/kornia-rs-apriltag-experiment;
-
-          cargoLock = {
-            lockFile = ./detectors/kornia-rs-apriltag-experiment/Cargo.lock;
-            outputHashes = {
-              "kornia-apriltag-0.1.11-rc.1" = "sha256-nNGNISNLEEgL6ltobNuMqLqoHznnfLxaywhTSSo1fKY=";
-            };
-          };
-
-          nativeBuildInputs = [ pkgs.pkg-config ];
-          buildInputs = [ pkgs.libjpeg pkgs.libpng ];
-
-          installPhase = ''
-            mkdir -p $out/bin
-            cp target/*/release/kornia-apriltag-detector $out/bin/kornia-rs-apriltag-experiment-detector
-          '';
-
-          meta = {
-            description = "AprilTag detector using kornia-rs apriltag-experiment branch";
-            homepage = "https://github.com/rossng/kornia-rs";
-            license = pkgs.lib.licenses.asl20;
-          };
+          sourceBinary = "kornia-apriltag-detector";
+          outputHash = "sha256-nNGNISNLEEgL6ltobNuMqLqoHznnfLxaywhTSSo1fKY=";
+          description = "AprilTag detector using kornia-rs apriltag-experiment branch";
         };
 
-        # Kornia-rs AprilTag detector program from centred-coordinates branch
-        kornia-rs-apriltag-centred-coordinates-detector = pkgs.rustPlatform.buildRustPackage {
-          pname = "kornia-rs-apriltag-centred-coordinates-detector";
-          version = "1.0.0";
-
+        kornia-rs-apriltag-centred-coordinates-detector = makeKorniaDetector {
+          name = "kornia-rs-apriltag-centred-coordinates";
           src = ./detectors/kornia-rs-apriltag-centred-coordinates;
-
-          cargoLock = {
-            lockFile = ./detectors/kornia-rs-apriltag-centred-coordinates/Cargo.lock;
-            outputHashes = {
-              "kornia-apriltag-0.1.11-rc.1" = "sha256-3D9vyslsmJv2UwZA2jZCDHfIRkSMjMeq9Av9pryx998=";
-            };
-          };
-
-          nativeBuildInputs = [ pkgs.pkg-config ];
-          buildInputs = [ pkgs.libjpeg pkgs.libpng ];
-
-          installPhase = ''
-            mkdir -p $out/bin
-            cp target/*/release/kornia-apriltag-centred-coordinates-detector $out/bin/kornia-rs-apriltag-centred-coordinates-detector
-          '';
-
-          meta = {
-            description = "AprilTag detector using kornia-rs centred-coordinates branch";
-            homepage = "https://github.com/rossng/kornia-rs";
-            license = pkgs.lib.licenses.asl20;
-          };
+          sourceBinary = "kornia-apriltag-centred-coordinates-detector";
+          outputHash = "sha256-3D9vyslsmJv2UwZA2jZCDHfIRkSMjMeq9Av9pryx998=";
+          description = "AprilTag detector using kornia-rs centred-coordinates branch";
         };
 
-        # Kornia-rs AprilTag detector program from other-fixes branch
-        kornia-rs-apriltag-other-fixes-detector = pkgs.rustPlatform.buildRustPackage {
-          pname = "kornia-rs-apriltag-other-fixes-detector";
-          version = "1.0.0";
-
+        kornia-rs-apriltag-other-fixes-detector = makeKorniaDetector {
+          name = "kornia-rs-apriltag-other-fixes";
           src = ./detectors/kornia-rs-apriltag-other-fixes;
-
-          cargoLock = {
-            lockFile = ./detectors/kornia-rs-apriltag-other-fixes/Cargo.lock;
-            outputHashes = {
-              "kornia-apriltag-0.1.11-rc.1" = "sha256-FrdtSBG9otoGpbMADWlRIFw+NtgpRjWb3BHeExcDD4k=";
-            };
-          };
-
-          nativeBuildInputs = [ pkgs.pkg-config ];
-          buildInputs = [ pkgs.libjpeg pkgs.libpng ];
-
-          installPhase = ''
-            mkdir -p $out/bin
-            cp target/*/release/kornia-apriltag-other-fixes-detector $out/bin/kornia-rs-apriltag-other-fixes-detector
-          '';
-
-          meta = {
-            description = "AprilTag detector using kornia-rs other-fixes branch";
-            homepage = "https://github.com/rossng/kornia-rs";
-            license = pkgs.lib.licenses.asl20;
-          };
+          sourceBinary = "kornia-apriltag-other-fixes-detector";
+          outputHash = "sha256-FrdtSBG9otoGpbMADWlRIFw+NtgpRjWb3BHeExcDD4k=";
+          description = "AprilTag detector using kornia-rs other-fixes branch";
         };
 
-        # Script to strip EXIF data from images in data/ folder
+        # EXIF stripping utility
         strip-exif = pkgs.writeShellScriptBin "strip-exif" ''
           ${pkgs.exiftool}/bin/exiftool -all= -overwrite_original -r data
         '';
 
-        # Script to run AprilTag 3.4.5 detector on data/ folder
-        run-apriltag-3-4-5 = pkgs.writeShellScriptBin "run-apriltag-3-4-5" ''
-          INPUT_DIR="''${1:-data}"
-          OUTPUT_DIR="''${2:-results/apriltag-3.4.5}"
+        # Detector runner scripts
+        run-apriltag-3-4-5 = makeDetectorRunner {
+          name = "apriltag-3-4-5";
+          detector = apriltag-3-4-5-detector;
+          displayName = "AprilTag 3.4.5";
+          defaultOutput = "apriltag-3.4.5";
+        };
 
-          echo "Running AprilTag 3.4.5 detector"
-          echo "  Input:  $INPUT_DIR"
-          echo "  Output: $OUTPUT_DIR"
-          echo ""
+        run-apriltags-kaess-3aea96d = makeDetectorRunner {
+          name = "apriltags-kaess-3aea96d";
+          detector = apriltags-kaess-3aea96d-detector;
+          displayName = "AprilTags Kaess (3aea96d)";
+          defaultOutput = "apriltags-kaess-3aea96d";
+        };
 
-          ${apriltag-3-4-5-detector}/bin/apriltag-3-4-5-detector \
-            --input "$INPUT_DIR" \
-            --output "$OUTPUT_DIR"
-        '';
+        run-kornia-apriltag-0-1-10 = makeDetectorRunner {
+          name = "kornia-apriltag-0-1-10";
+          detector = kornia-apriltag-0-1-10-detector;
+          displayName = "Kornia AprilTag (0.1.10)";
+          defaultOutput = "kornia-apriltag-0.1.10";
+        };
 
-        # Script to run AprilTags Kaess detector on data/ folder
-        run-apriltags-kaess-3aea96d = pkgs.writeShellScriptBin "run-apriltags-kaess-3aea96d" ''
-          INPUT_DIR="''${1:-data}"
-          OUTPUT_DIR="''${2:-results/apriltags-kaess-3aea96d}"
+        run-kornia-rs-apriltag-experiment = makeDetectorRunner {
+          name = "kornia-rs-apriltag-experiment";
+          detector = kornia-rs-apriltag-experiment-detector;
+          displayName = "Kornia-rs AprilTag (apriltag-experiment)";
+          defaultOutput = "kornia-rs-apriltag-experiment";
+        };
 
-          echo "Running AprilTags Kaess (3aea96d) detector"
-          echo "  Input:  $INPUT_DIR"
-          echo "  Output: $OUTPUT_DIR"
-          echo ""
+        run-kornia-rs-apriltag-centred-coordinates = makeDetectorRunner {
+          name = "kornia-rs-apriltag-centred-coordinates";
+          detector = kornia-rs-apriltag-centred-coordinates-detector;
+          displayName = "Kornia-rs AprilTag (centred-coordinates)";
+          defaultOutput = "kornia-rs-apriltag-centred-coordinates";
+        };
 
-          ${apriltags-kaess-3aea96d-detector}/bin/apriltags-kaess-3aea96d-detector \
-            --input "$INPUT_DIR" \
-            --output "$OUTPUT_DIR"
-        '';
+        run-kornia-rs-apriltag-other-fixes = makeDetectorRunner {
+          name = "kornia-rs-apriltag-other-fixes";
+          detector = kornia-rs-apriltag-other-fixes-detector;
+          displayName = "Kornia-rs AprilTag (other-fixes)";
+          defaultOutput = "kornia-rs-apriltag-other-fixes";
+        };
 
-        # Script to run Kornia AprilTag detector on data/ folder
-        run-kornia-apriltag-0-1-10 = pkgs.writeShellScriptBin "run-kornia-apriltag-0-1-10" ''
-          INPUT_DIR="''${1:-data}"
-          OUTPUT_DIR="''${2:-results/kornia-apriltag-0.1.10}"
-
-          echo "Running Kornia AprilTag (0.1.10) detector"
-          echo "  Input:  $INPUT_DIR"
-          echo "  Output: $OUTPUT_DIR"
-          echo ""
-
-          ${kornia-apriltag-0-1-10-detector}/bin/kornia-apriltag-0-1-10-detector \
-            --input "$INPUT_DIR" \
-            --output "$OUTPUT_DIR"
-        '';
-
-        # Script to run Kornia-rs AprilTag detector (apriltag-experiment branch) on data/ folder
-        run-kornia-rs-apriltag-experiment = pkgs.writeShellScriptBin "run-kornia-rs-apriltag-experiment" ''
-          INPUT_DIR="''${1:-data}"
-          OUTPUT_DIR="''${2:-results/kornia-rs-apriltag-experiment}"
-
-          echo "Running Kornia-rs AprilTag (apriltag-experiment) detector"
-          echo "  Input:  $INPUT_DIR"
-          echo "  Output: $OUTPUT_DIR"
-          echo ""
-
-          ${kornia-rs-apriltag-experiment-detector}/bin/kornia-rs-apriltag-experiment-detector \
-            --input "$INPUT_DIR" \
-            --output "$OUTPUT_DIR"
-        '';
-
-        # Script to run Kornia-rs AprilTag detector (centred-coordinates branch) on data/ folder
-        run-kornia-rs-apriltag-centred-coordinates = pkgs.writeShellScriptBin "run-kornia-rs-apriltag-centred-coordinates" ''
-          INPUT_DIR="''${1:-data}"
-          OUTPUT_DIR="''${2:-results/kornia-rs-apriltag-centred-coordinates}"
-
-          echo "Running Kornia-rs AprilTag (centred-coordinates) detector"
-          echo "  Input:  $INPUT_DIR"
-          echo "  Output: $OUTPUT_DIR"
-          echo ""
-
-          ${kornia-rs-apriltag-centred-coordinates-detector}/bin/kornia-rs-apriltag-centred-coordinates-detector \
-            --input "$INPUT_DIR" \
-            --output "$OUTPUT_DIR"
-        '';
-
-        # Script to run Kornia-rs AprilTag detector (other-fixes branch) on data/ folder
-        run-kornia-rs-apriltag-other-fixes = pkgs.writeShellScriptBin "run-kornia-rs-apriltag-other-fixes" ''
-          INPUT_DIR="''${1:-data}"
-          OUTPUT_DIR="''${2:-results/kornia-rs-apriltag-other-fixes}"
-
-          echo "Running Kornia-rs AprilTag (other-fixes) detector"
-          echo "  Input:  $INPUT_DIR"
-          echo "  Output: $OUTPUT_DIR"
-          echo ""
-
-          ${kornia-rs-apriltag-other-fixes-detector}/bin/kornia-rs-apriltag-other-fixes-detector \
-            --input "$INPUT_DIR" \
-            --output "$OUTPUT_DIR"
-        '';
-
-        # Script to run all detectors in sequence
+        # Run all detectors in sequence
         run-all-detectors = pkgs.writeShellScriptBin "run-all-detectors" ''
           INPUT_DIR="''${1:-data}"
           RESULTS_DIR="''${2:-results}"
@@ -352,7 +274,7 @@
           echo "All detectors completed!"
         '';
 
-        # Script to run ground truth editor
+        # Ground truth editor
         edit-ground-truth = pkgs.writeShellScriptBin "edit-ground-truth" ''
           echo "Starting Ground Truth Editor..."
           echo "  API Server: http://localhost:3000"
@@ -388,7 +310,7 @@
           cleanup
         '';
 
-        # Script to generate comparison report
+        # Generate comparison report
         compare-detectors = pkgs.writeShellScriptBin "compare-detectors" ''
           set -e
 
@@ -432,47 +354,11 @@
           inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5 edit-ground-truth apriltags-kaess-3aea96d apriltags-kaess-3aea96d-detector run-apriltags-kaess-3aea96d kornia-apriltag-0-1-10-detector run-kornia-apriltag-0-1-10 kornia-rs-apriltag-experiment-detector run-kornia-rs-apriltag-experiment kornia-rs-apriltag-centred-coordinates-detector run-kornia-rs-apriltag-centred-coordinates kornia-rs-apriltag-other-fixes-detector run-kornia-rs-apriltag-other-fixes run-all-detectors compare-detectors;
         };
 
-        apps = {
-          strip-exif = {
-            type = "app";
-            program = "${strip-exif}/bin/strip-exif";
-          };
-          run-apriltag-3-4-5 = {
-            type = "app";
-            program = "${run-apriltag-3-4-5}/bin/run-apriltag-3-4-5";
-          };
-          run-apriltags-kaess-3aea96d = {
-            type = "app";
-            program = "${run-apriltags-kaess-3aea96d}/bin/run-apriltags-kaess-3aea96d";
-          };
-          run-kornia-apriltag-0-1-10 = {
-            type = "app";
-            program = "${run-kornia-apriltag-0-1-10}/bin/run-kornia-apriltag-0-1-10";
-          };
-          run-kornia-rs-apriltag-experiment = {
-            type = "app";
-            program = "${run-kornia-rs-apriltag-experiment}/bin/run-kornia-rs-apriltag-experiment";
-          };
-          run-kornia-rs-apriltag-centred-coordinates = {
-            type = "app";
-            program = "${run-kornia-rs-apriltag-centred-coordinates}/bin/run-kornia-rs-apriltag-centred-coordinates";
-          };
-          run-kornia-rs-apriltag-other-fixes = {
-            type = "app";
-            program = "${run-kornia-rs-apriltag-other-fixes}/bin/run-kornia-rs-apriltag-other-fixes";
-          };
-          run-all-detectors = {
-            type = "app";
-            program = "${run-all-detectors}/bin/run-all-detectors";
-          };
-          edit-ground-truth = {
-            type = "app";
-            program = "${edit-ground-truth}/bin/edit-ground-truth";
-          };
-          compare-detectors = {
-            type = "app";
-            program = "${compare-detectors}/bin/compare-detectors";
-          };
+        apps = pkgs.lib.mapAttrs (name: pkg: {
+          type = "app";
+          program = "${pkg}/bin/${name}";
+        }) {
+          inherit strip-exif run-apriltag-3-4-5 run-apriltags-kaess-3aea96d run-kornia-apriltag-0-1-10 run-kornia-rs-apriltag-experiment run-kornia-rs-apriltag-centred-coordinates run-kornia-rs-apriltag-other-fixes run-all-detectors edit-ground-truth compare-detectors;
         };
 
         devShells.default = pkgs.mkShell {
