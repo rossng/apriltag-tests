@@ -10,13 +10,13 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct Corner {
     x: f32,
     y: f32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct Detection {
     tag_id: u16,
     tag_family: String,
