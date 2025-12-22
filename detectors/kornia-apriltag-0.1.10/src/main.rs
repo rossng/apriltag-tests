@@ -4,7 +4,7 @@ use kornia_apriltag::family::TagFamilyKind;
 use kornia_image::{Image, ImageSize};
 use kornia_image::allocator::CpuAllocator;
 use kornia_imgproc::color::gray_from_rgb;
-use kornia_io::functional as K;
+use kornia_io::jpeg::read_image_jpeg_rgb8;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -76,7 +76,7 @@ fn process_image(
     println!("Processing: {}", image_name);
 
     // Load image as RGB8
-    let img_rgb: Image<u8, 3, CpuAllocator> = K::read_image_any_rgb8(image_path)
+    let img_rgb: Image<u8, 3, CpuAllocator> = read_image_jpeg_rgb8(image_path)
         .context("Failed to load image")?;
 
     // Convert to f32 and scale to [0, 1]

@@ -4,7 +4,7 @@ use kornia_apriltag::family::TagFamilyKind;
 use kornia_image::{Image, ImageSize};
 use kornia_image::allocator::CpuAllocator;
 use kornia_imgproc::color::gray_from_rgb_u8;
-use kornia_io::functional as K;
+use kornia_io::jpeg::read_image_jpeg_rgb8;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -69,12 +69,12 @@ fn detect_in_image(
     decoder: &mut AprilTagDecoder,
 ) -> Result<Vec<Detection>> {
     // Load image as RGB8
-    let img_rgb = K::read_image_any_rgb8(image_path)
+    let img_rgb = read_image_jpeg_rgb8(image_path)
         .context("Failed to load image")?;
 
     // Convert to grayscale directly from u8
-    let mut img_gray = Image::<u8, 1, CpuAllocator>::from_size_val(img_rgb.0.size(), 0, CpuAllocator)?;
-    gray_from_rgb_u8(&img_rgb.0, &mut img_gray)?;
+    let mut img_gray = Image::<u8, 1, CpuAllocator>::from_size_val(img_rgb.size(), 0, CpuAllocator)?;
+    gray_from_rgb_u8(&img_rgb, &mut img_gray)?;
 
     // Detect tags
     let detections = decoder.decode(&img_gray)
@@ -193,11 +193,11 @@ fn main() -> Result<()> {
     }
 
     // Get the size of the first image to create decoders
-    let first_img = K::read_image_any_rgb8(&image_paths[0])
+    let first_img = read_image_jpeg_rgb8(&image_paths[0])
         .context("Failed to load first image")?;
     let img_size = ImageSize {
-        width: first_img.0.width(),
-        height: first_img.0.height(),
+        width: first_img.width(),
+        height: first_img.height(),
     };
 
     // Store all detections per image (image_path -> detections)
