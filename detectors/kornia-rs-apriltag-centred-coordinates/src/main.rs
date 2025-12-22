@@ -189,7 +189,7 @@ fn main() -> Result<()> {
             .unwrap_or("")
             .to_lowercase();
 
-        if ext == "jpg" || ext == "jpeg" || ext == "png" {
+        if ext == "jpg" || ext == "jpeg" {
             image_paths.push(path);
         }
     }
