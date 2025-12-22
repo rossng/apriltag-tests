@@ -27,13 +27,15 @@ nix run .#edit-ground-truth
 
 All detectors follow the same interface: `--input <dir> --output <dir>`
 
-| Command                                       | Description                                |
-| --------------------------------------------- | ------------------------------------------ |
-| `nix run .#run-apriltag-3-4-5`                | AprilTag 3.4.5 (official C implementation) |
-| `nix run .#run-apriltags-kaess-3aea96d`       | Michael Kaess' AprilTags library           |
-| `nix run .#run-kornia-apriltag-0-1-10`        | Kornia-rs AprilTag 0.1.10                  |
-| `nix run .#run-kornia-rs-apriltag-experiment` | Kornia-rs apriltag-experiment branch       |
-| `nix run .#run-all-detectors`                 | Run all detectors sequentially             |
+| Command                                            | Description                                |
+| -------------------------------------------------- | ------------------------------------------ |
+| `nix run .#run-apriltag-3-4-5`                     | AprilTag 3.4.5 (official C implementation) |
+| `nix run .#run-apriltags-kaess-3aea96d`            | Michael Kaess' AprilTags library           |
+| `nix run .#run-kornia-apriltag-0-1-10`             | Kornia-rs AprilTag 0.1.10                  |
+| `nix run .#run-kornia-rs-apriltag-experiment`      | Kornia-rs apriltag-experiment branch       |
+| `nix run .#run-kornia-rs-apriltag-centred-coordinates` | Kornia-rs centred-coordinates branch   |
+| `nix run .#run-kornia-rs-apriltag-other-fixes`     | Kornia-rs other-fixes branch               |
+| `nix run .#run-all-detectors`                      | Run all detectors sequentially             |
 
 ## Tools
 
