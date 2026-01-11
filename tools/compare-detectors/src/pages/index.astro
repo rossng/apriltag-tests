@@ -1,0 +1,43 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SummaryGrid from '../components/SummaryGrid.astro';
+import ImageSection from '../components/ImageSection.astro';
+import { loadAllData, toSerializableResult, toSerializableSummary } from '../lib/data';
+import type { SerializableSummary, SerializableImageResult } from '../lib/types';
+
+// Get configuration from environment variables
+const groundTruthDir = import.meta.env.GROUND_TRUTH_DIR || '../../ground-truth';
+const resultsDir = import.meta.env.RESULTS_DIR || '../../results';
+const detectorsEnv = import.meta.env.DETECTORS || 'apriltag-3.4.5,apriltags-kaess-3aea96d,kornia-rs-apriltag';
+const detectorNames = detectorsEnv.split(',').map((s: string) => s.trim());
+
+// Load all data at build time
+const { results, summaries, rawDetections } = loadAllData(groundTruthDir, resultsDir, detectorNames);
+
+// Convert to serializable format for the page
+const serializableSummaries: Record<string, SerializableSummary> = {};
+for (const [name, summary] of summaries) {
+  serializableSummaries[name] = toSerializableSummary(summary);
+}
+
+const serializableResults: SerializableImageResult[] = [];
+for (const [imageName, result] of Array.from(results.entries()).sort()) {
+  const raw = rawDetections.get(imageName);
+  if (raw) {
+    serializableResults.push(toSerializableResult(result, raw));
+  }
+}
+---
+
+<Layout title="AprilTag Detector Comparison Report">
+  <h1>AprilTag Detector Comparison Report</h1>
+  <p>Comparison of detector performance against ground truth annotations.</p>
+
+  <h2>Summary Statistics</h2>
+  <SummaryGrid summaries={serializableSummaries} detectorNames={detectorNames} />
+
+  <h2>Per-Image Results</h2>
+  {serializableResults.map((result) => (
+    <ImageSection result={result} detectorNames={detectorNames} />
+  ))}
+</Layout>

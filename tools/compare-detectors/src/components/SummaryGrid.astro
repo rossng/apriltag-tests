@@ -1,0 +1,17 @@
+---
+import type { SerializableSummary } from '../lib/types';
+import DetectorCard from './DetectorCard.astro';
+
+interface Props {
+  summaries: Record<string, SerializableSummary>;
+  detectorNames: string[];
+}
+
+const { summaries, detectorNames } = Astro.props;
+---
+
+<div class="summary-grid">
+  {detectorNames.map((name) => (
+    <DetectorCard name={name} summary={summaries[name]} />
+  ))}
+</div>

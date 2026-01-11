@@ -1,0 +1,24 @@
+---
+interface Props {
+  label: string;
+  tags: string[];
+  tagClass: 'tag-gt' | 'tag-detected' | 'tag-missed' | 'tag-fp';
+}
+
+const { label, tags, tagClass } = Astro.props;
+
+const sortedTags = [...tags].sort((a, b) => {
+  const [familyA, idA] = a.split(':');
+  const [familyB, idB] = b.split(':');
+  const familyCompare = familyA.localeCompare(familyB);
+  if (familyCompare !== 0) return familyCompare;
+  return parseInt(idA) - parseInt(idB);
+});
+---
+
+<div class="tag-list">
+  <span class="tag-list-label">{label}</span>
+  {sortedTags.map((tag) => (
+    <span class={`tag ${tagClass}`}>{tag}</span>
+  ))}
+</div>

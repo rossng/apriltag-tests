@@ -7,6 +7,7 @@ on:
       - 'detectors/**'
       - 'data/**'
       - 'ground-truth/**'
+      - 'tools/compare-detectors/**'
       - 'flake.nix'
       - 'flake.lock'
       - '.github/workflows/detect-and-compare.yml'
@@ -16,6 +17,7 @@ on:
       - 'detectors/**'
       - 'data/**'
       - 'ground-truth/**'
+      - 'tools/compare-detectors/**'
       - 'flake.nix'
       - 'flake.lock'
       - '.github/workflows/detect-and-compare.yml'
@@ -72,7 +74,7 @@ jobs:
           echo "No changes to detector results"
         fi
 
-    - name: Generate comparison report
+    - name: Build comparison site
       run: |
         nix run .#compare-detectors
 
@@ -80,18 +82,14 @@ jobs:
       if: github.ref == 'refs/heads/main'
       run: |
         mkdir -p _site
-        cp comparison-report.html _site/index.html
-        # Copy source images to _site for client-side visualization
-        if [ -d "data" ]; then
-          mkdir -p _site/data
-          cp data/*.jpg data/*.png _site/data/ 2>/dev/null || true
-        fi
+        # Copy Astro build output (includes images in dist/data/)
+        cp -r tools/compare-detectors/dist/* _site/
 
     - name: Upload comparison report as artifact
       uses: actions/upload-artifact@v4
       with:
         name: comparison-report
-        path: comparison-report.html
+        path: tools/compare-detectors/dist/
         retention-days: 90
 
     - name: Setup GitHub Pages

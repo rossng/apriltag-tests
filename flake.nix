@@ -254,20 +254,20 @@
           cleanup
         '';
 
-        # Generate comparison report
+        # Generate comparison report (Astro static site)
         compare-detectors = pkgs.writeShellScriptBin "compare-detectors" ''
           set -e
 
-          GROUND_TRUTH_DIR="''${1:-ground-truth}"
-          RESULTS_DIR="''${2:-results}"
-          DATA_DIR="''${3:-data}"
-          OUTPUT_FILE="''${4:-comparison-report.html}"
+          GROUND_TRUTH_DIR="''${GROUND_TRUTH_DIR:-ground-truth}"
+          RESULTS_DIR="''${RESULTS_DIR:-results}"
+          DATA_DIR="''${DATA_DIR:-data}"
+          DETECTORS="''${DETECTORS:-apriltag-3.4.5,apriltags-kaess-3aea96d,kornia-rs-apriltag}"
 
-          echo "Generating detector comparison report..."
+          echo "Building detector comparison site..."
           echo "  Ground Truth:    $GROUND_TRUTH_DIR"
           echo "  Results:         $RESULTS_DIR"
           echo "  Data:            $DATA_DIR"
-          echo "  Output:          $OUTPUT_FILE"
+          echo "  Detectors:       $DETECTORS"
           echo ""
 
           cd tools/compare-detectors
@@ -278,18 +278,18 @@
             ${pkgs.nodejs}/bin/npm install
           fi
 
-          # Build TypeScript if needed
-          if [ ! -d "dist" ] || [ src/compare.ts -nt dist/compare.js ]; then
-            echo "Building TypeScript..."
-            ${pkgs.nodejs}/bin/npm run build
-          fi
+          # Build Astro site
+          GROUND_TRUTH_DIR="../../$GROUND_TRUTH_DIR" \
+          RESULTS_DIR="../../$RESULTS_DIR" \
+          DETECTORS="$DETECTORS" \
+          ${pkgs.nodejs}/bin/npm run build
 
-          ${pkgs.nodejs}/bin/node dist/compare.js \
-            --ground-truth "../../$GROUND_TRUTH_DIR" \
-            --results "../../$RESULTS_DIR" \
-            --data "../../$DATA_DIR" \
-            --detectors apriltag-3.4.5 apriltags-kaess-3aea96d kornia-rs-apriltag \
-            --output "../../$OUTPUT_FILE"
+          # Copy images to dist for visualization
+          mkdir -p dist/data
+          cp "../../$DATA_DIR"/*.jpg "../../$DATA_DIR"/*.png dist/data/ 2>/dev/null || true
+
+          echo ""
+          echo "Build complete! Output in tools/compare-detectors/dist/"
         '';
 
       in

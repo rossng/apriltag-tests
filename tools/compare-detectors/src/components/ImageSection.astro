@@ -1,0 +1,74 @@
+---
+import type { SerializableImageResult, SerializableDetection } from '../lib/types';
+import ImageViewer from './ImageViewer.astro';
+import TagList from './TagList.astro';
+
+interface Props {
+  result: SerializableImageResult;
+  detectorNames: string[];
+}
+
+const { result, detectorNames } = Astro.props;
+
+const imageId = result.imageName.replace(/[^a-zA-Z0-9]/g, '_');
+const groundTruthTags = result.groundTruth.map(d => `${d.tag_family}:${d.tag_id}`);
+---
+
+<div class="image-section">
+  <h3>{result.imageName}</h3>
+
+  <ImageViewer
+    imageId={imageId}
+    imagePath={result.imagePath}
+    groundTruth={result.groundTruth}
+    detectorResults={result.detectorResults}
+    detectorNames={detectorNames}
+  />
+
+  <TagList label="Ground Truth:" tags={groundTruthTags} tagClass="tag-gt" />
+
+  <div class="detector-results">
+    {detectorNames.map((detectorName) => {
+      const stats = result.stats[detectorName];
+      const missed = result.missed[detectorName] || [];
+      const fps = result.falsePositives[detectorName] || [];
+      const timing = result.timings[detectorName];
+
+      return (
+        <div class="detector-result">
+          <h4>{detectorName}</h4>
+          <div class="stats-row">
+            <span class="stat">Detected: {stats?.detected || 0}</span>
+            <span class="stat" style="color: #D32F2F;">Missed: {stats?.missed || 0}</span>
+            <span class="stat" style="color: #F57C00;">False Pos: {stats?.falsePositives || 0}</span>
+          </div>
+
+          {timing && (
+            <div class="image-timing">
+              <div class="image-timing-row">
+                <span class="image-timing-label">Image Load:</span>
+                <span class="image-timing-value">{timing.image_load_ms.toFixed(1)} ms</span>
+              </div>
+              <div class="image-timing-row">
+                <span class="image-timing-label">Detection:</span>
+                <span class="image-timing-value">{timing.total_detection_ms.toFixed(1)} ms</span>
+              </div>
+              <div class="image-timing-row">
+                <span class="image-timing-label">Total:</span>
+                <span class="image-timing-value">{(timing.image_load_ms + timing.total_detection_ms).toFixed(1)} ms</span>
+              </div>
+            </div>
+          )}
+
+          {missed.length > 0 && (
+            <TagList label="Missed:" tags={missed} tagClass="tag-missed" />
+          )}
+
+          {fps.length > 0 && (
+            <TagList label="False Positives:" tags={fps} tagClass="tag-fp" />
+          )}
+        </div>
+      );
+    })}
+  </div>
+</div>

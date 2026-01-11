@@ -1,0 +1,132 @@
+---
+import type { SerializableSummary } from '../lib/types';
+
+interface Props {
+  name: string;
+  summary: SerializableSummary;
+}
+
+const { name, summary } = Astro.props;
+
+const f1Class = summary.f1Score >= 0.9 ? 'good' : (summary.f1Score >= 0.7 ? 'warning' : 'error');
+
+const totalAvg = summary.timing.avgImageLoadMs + summary.timing.avgTotalDetectionMs;
+const loadPct = totalAvg > 0 ? Math.round(summary.timing.avgImageLoadMs / totalAvg * 100) : 0;
+const detectPct = totalAvg > 0 ? Math.round(summary.timing.avgTotalDetectionMs / totalAvg * 100) : 0;
+
+const sortedMissed = Object.entries(summary.missedByFamily).sort(([a], [b]) => a.localeCompare(b));
+const sortedFp = Object.entries(summary.fpByFamily).sort(([a], [b]) => a.localeCompare(b));
+const sortedFamilyTimings = summary.timing.familyTimings.sort((a, b) => a.family.localeCompare(b.family));
+---
+
+<div class="detector-card">
+  <h3>{name}</h3>
+
+  {summary.supportedFamilies.length > 0 && (
+    <div class="family-breakdown">
+      <strong>Supported Families:</strong>
+      <div class="family-item">{summary.supportedFamilies.join(', ')}</div>
+    </div>
+  )}
+
+  <div class="metric">
+    <span class="metric-label">F1 Score</span>
+    <span class={`metric-value percentage ${f1Class}`}>{(summary.f1Score * 100).toFixed(1)}%</span>
+  </div>
+  <div class="metric">
+    <span class="metric-label">Precision</span>
+    <span class="metric-value">{(summary.precision * 100).toFixed(1)}%</span>
+  </div>
+  <div class="metric">
+    <span class="metric-label">Recall</span>
+    <span class="metric-value">{(summary.recall * 100).toFixed(1)}%</span>
+  </div>
+  <div class="metric">
+    <span class="metric-label">Ground Truth Tags</span>
+    <span class="metric-value">{summary.totalGroundTruth}</span>
+  </div>
+  <div class="metric">
+    <span class="metric-label">True Positives</span>
+    <span class="metric-value good">{summary.truePositives}</span>
+  </div>
+  <div class="metric">
+    <span class="metric-label">Missed Detections</span>
+    <span class="metric-value error">{summary.missed}</span>
+  </div>
+  <div class="metric">
+    <span class="metric-label">False Positives</span>
+    <span class="metric-value warning">{summary.falsePositives}</span>
+  </div>
+
+  {sortedMissed.length > 0 && (
+    <div class="family-breakdown">
+      <strong>Missed by Family:</strong>
+      {sortedMissed.map(([family, count]) => (
+        <div class="family-item">{family}: {count}</div>
+      ))}
+    </div>
+  )}
+
+  {sortedFp.length > 0 && (
+    <div class="family-breakdown">
+      <strong>False Positives by Family:</strong>
+      {sortedFp.map(([family, count]) => (
+        <div class="family-item">{family}: {count}</div>
+      ))}
+    </div>
+  )}
+
+  {summary.timing.imageCount > 0 && (
+    <div class="timing-section">
+      <h4>Performance Timing</h4>
+      <div class="timing-grid">
+        <div class="timing-item">
+          <span class="timing-label">Avg Image Load</span>
+          <span class="timing-value">{summary.timing.avgImageLoadMs.toFixed(1)} ms</span>
+        </div>
+        <div class="timing-item">
+          <span class="timing-label">Avg Detection</span>
+          <span class="timing-value">{summary.timing.avgTotalDetectionMs.toFixed(1)} ms</span>
+        </div>
+        <div class="timing-item">
+          <span class="timing-label">Total Time</span>
+          <span class="timing-value">{((summary.timing.totalImageLoadMs + summary.timing.totalDetectionMs) / 1000).toFixed(2)} s</span>
+        </div>
+        <div class="timing-item">
+          <span class="timing-label">Images Processed</span>
+          <span class="timing-value">{summary.timing.imageCount}</span>
+        </div>
+      </div>
+
+      {totalAvg > 0 && (
+        <div class="timing-bar">
+          <div class="timing-bar-segment timing-bar-load" style={`width: ${loadPct}%`} title={`Image Load: ${summary.timing.avgImageLoadMs.toFixed(1)}ms`}>Load</div>
+          <div class="timing-bar-segment timing-bar-detect" style={`width: ${detectPct}%`} title={`Detection: ${summary.timing.avgTotalDetectionMs.toFixed(1)}ms`}>Detect</div>
+        </div>
+      )}
+
+      {sortedFamilyTimings.length > 0 && (
+        <table class="timing-family-table">
+          <thead>
+            <tr>
+              <th>Family</th>
+              <th>Avg Init</th>
+              <th>Avg Detect</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedFamilyTimings.map((timing) => (
+              <tr>
+                <td>{timing.family}</td>
+                <td>{timing.avgInit.toFixed(2)} ms</td>
+                <td>{timing.avgDetect.toFixed(2)} ms</td>
+                <td>{(timing.avgInit + timing.avgDetect).toFixed(2)} ms</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  )}
+</div>

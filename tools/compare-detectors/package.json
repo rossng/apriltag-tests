@@ -1,13 +1,15 @@
 {
   "name": "compare-detectors",
-  "version": "1.0.0",
-  "description": "Compare AprilTag detector results against ground truth",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/compare.js"
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
   },
-  "dependencies": {},
+  "dependencies": {
+    "astro": "^4.16.0"
+  },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "typescript": "^5.0.0"

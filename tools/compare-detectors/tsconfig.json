@@ -1,16 +1,23 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ES2022",
-    "moduleResolution": "node",
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
     "strict": true,
-    "esModuleInterop": true,
+    "strictNullChecks": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    "jsx": "react-jsx",
+    "jsxImportSource": "astro",
+    "allowJs": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "types": ["astro/client", "node"]
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", ".astro/types.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

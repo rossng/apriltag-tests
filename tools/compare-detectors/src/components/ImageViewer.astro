@@ -1,0 +1,167 @@
+---
+import type { SerializableDetection } from '../lib/types';
+
+interface Props {
+  imageId: string;
+  imagePath: string;
+  groundTruth: SerializableDetection[];
+  detectorResults: Record<string, SerializableDetection[]>;
+  detectorNames: string[];
+}
+
+const { imageId, imagePath, groundTruth, detectorResults, detectorNames } = Astro.props;
+
+const detectionData = {
+  imagePath,
+  'ground-truth': groundTruth,
+  ...detectorResults
+};
+---
+
+<div class="image-viewer">
+  <div class="viewer-controls" data-image-id={imageId}>
+    <button class="viewer-button active" data-detector="ground-truth">Ground Truth</button>
+    {detectorNames.map((name) => (
+      <button class="viewer-button" data-detector={name}>{name}</button>
+    ))}
+  </div>
+  <div class="canvas-container">
+    <canvas id={`canvas-${imageId}`}></canvas>
+  </div>
+</div>
+
+<script is:inline define:vars={{ imageId, detectionData }}>
+  // Store detection data in a global map
+  window.detectionDataMap = window.detectionDataMap || {};
+  window.detectionDataMap[imageId] = detectionData;
+
+  function drawDetection(ctx, detection, color) {
+    const corners = detection.corners;
+    const tagId = detection.tag_id;
+    const tagFamily = detection.tag_family;
+
+    // Draw the quadrilateral
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(corners[0].x, corners[0].y);
+    for (let i = 1; i < corners.length; i++) {
+      ctx.lineTo(corners[i].x, corners[i].y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+
+    // Draw corner circles
+    ctx.fillStyle = color;
+    for (const corner of corners) {
+      ctx.beginPath();
+      ctx.arc(corner.x, corner.y, 5, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+
+    // Calculate center for label
+    const centerX = corners.reduce((sum, c) => sum + c.x, 0) / corners.length;
+    const centerY = corners.reduce((sum, c) => sum + c.y, 0) / corners.length;
+
+    // Create label
+    const label = tagFamily + ':' + tagId;
+
+    // Set font
+    ctx.font = 'bold 16px Arial';
+    const metrics = ctx.measureText(label);
+    const textWidth = metrics.width;
+    const textHeight = 16;
+
+    // Draw background rectangle
+    const padding = 5;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(
+      centerX - textWidth / 2 - padding,
+      centerY - textHeight / 2 - padding,
+      textWidth + padding * 2,
+      textHeight + padding * 2
+    );
+
+    // Draw text
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, centerX, centerY);
+  }
+
+  function drawVisualization(imageId, detector) {
+    const canvas = document.getElementById('canvas-' + imageId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const data = window.detectionDataMap[imageId];
+
+    if (!data) return;
+
+    const detections = data[detector] || [];
+    const color = detector === 'ground-truth' ? '#00FF00' : '#FFA500';
+    const title = detector === 'ground-truth' ? 'Ground Truth' : detector;
+
+    // Load image
+    const img = new Image();
+    img.onload = function() {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+
+      for (const detection of detections) {
+        drawDetection(ctx, detection, color);
+      }
+
+      // Add title
+      ctx.font = 'bold 24px Arial';
+      const titleMetrics = ctx.measureText(title);
+      const titleWidth = titleMetrics.width;
+      const titleHeight = 24;
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.fillRect(10, 10, titleWidth + 20, titleHeight + 20);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(title, 20, 20);
+    };
+
+    img.src = data.imagePath;
+  }
+
+  function showVisualization(imageId, detector) {
+    const controls = document.querySelector(`.viewer-controls[data-image-id="${imageId}"]`);
+    if (!controls) return;
+
+    const buttons = controls.querySelectorAll('.viewer-button');
+    buttons.forEach(btn => {
+      if (btn.dataset.detector === detector) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    drawVisualization(imageId, detector);
+  }
+
+  // Setup click handlers for this viewer
+  const controls = document.querySelector(`.viewer-controls[data-image-id="${imageId}"]`);
+  if (controls) {
+    controls.querySelectorAll('.viewer-button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        showVisualization(imageId, btn.dataset.detector);
+      });
+    });
+  }
+
+  // Initialize visualization on load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      drawVisualization(imageId, 'ground-truth');
+    });
+  } else {
+    drawVisualization(imageId, 'ground-truth');
+  }
+</script>
