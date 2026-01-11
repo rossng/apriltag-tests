@@ -127,3 +127,34 @@ export interface SerializableSummary {
   supportedFamilies: string[];
   timing: SerializableTimingSummary;
 }
+
+// Parsed detector info for display
+export interface DetectorInfo {
+  fullName: string;      // e.g., "kornia-rs-apriltag@aarch64-darwin"
+  baseName: string;      // e.g., "kornia-rs-apriltag"
+  arch: string | null;   // e.g., "aarch64-darwin" or null if no arch
+}
+
+// Parse a detector name that may include @arch suffix
+export function parseDetectorName(name: string): DetectorInfo {
+  const atIndex = name.indexOf('@');
+  if (atIndex === -1) {
+    return { fullName: name, baseName: name, arch: null };
+  }
+  return {
+    fullName: name,
+    baseName: name.substring(0, atIndex),
+    arch: name.substring(atIndex + 1)
+  };
+}
+
+// Format architecture for display
+export function formatArch(arch: string): string {
+  const archMap: Record<string, string> = {
+    'x86_64-linux': 'x86 Linux',
+    'aarch64-darwin': 'ARM64 macOS',
+    'aarch64-linux': 'ARM64 Linux',
+    'x86_64-darwin': 'x86 macOS',
+  };
+  return archMap[arch] || arch;
+}

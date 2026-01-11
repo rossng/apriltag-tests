@@ -1,5 +1,6 @@
 ---
-import type { SerializableImageResult, SerializableDetection } from '../lib/types';
+import type { SerializableImageResult } from '../lib/types';
+import { parseDetectorName, formatArch } from '../lib/types';
 import ImageViewer from './ImageViewer.astro';
 import TagList from './TagList.astro';
 
@@ -33,10 +34,14 @@ const groundTruthTags = result.groundTruth.map(d => `${d.tag_family}:${d.tag_id}
       const missed = result.missed[detectorName] || [];
       const fps = result.falsePositives[detectorName] || [];
       const timing = result.timings[detectorName];
+      const detectorInfo = parseDetectorName(detectorName);
 
       return (
         <div class="detector-result">
-          <h4>{detectorName}</h4>
+          <h4>
+            {detectorInfo.baseName}
+            {detectorInfo.arch && <span class="arch-badge">{formatArch(detectorInfo.arch)}</span>}
+          </h4>
           <div class="stats-row">
             <span class="stat">Detected: {stats?.detected || 0}</span>
             <span class="stat" style="color: #D32F2F;">Missed: {stats?.missed || 0}</span>

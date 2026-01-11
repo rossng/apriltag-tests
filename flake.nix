@@ -198,21 +198,33 @@
         run-all-detectors = pkgs.writeShellScriptBin "run-all-detectors" ''
           INPUT_DIR="''${1:-data}"
           RESULTS_DIR="''${2:-results}"
+          ARCH_SUFFIX="''${3:-}"
 
-          echo "Running all detectors on $INPUT_DIR"
+          # If arch suffix is provided, append @arch to detector names
+          if [ -n "$ARCH_SUFFIX" ]; then
+            APRILTAG_OUTPUT="$RESULTS_DIR/apriltag-3.4.5@$ARCH_SUFFIX"
+            KAESS_OUTPUT="$RESULTS_DIR/apriltags-kaess-3aea96d@$ARCH_SUFFIX"
+            KORNIA_OUTPUT="$RESULTS_DIR/kornia-rs-apriltag@$ARCH_SUFFIX"
+            echo "Running all detectors on $INPUT_DIR (arch: $ARCH_SUFFIX)"
+          else
+            APRILTAG_OUTPUT="$RESULTS_DIR/apriltag-3.4.5"
+            KAESS_OUTPUT="$RESULTS_DIR/apriltags-kaess-3aea96d"
+            KORNIA_OUTPUT="$RESULTS_DIR/kornia-rs-apriltag"
+            echo "Running all detectors on $INPUT_DIR"
+          fi
           echo "Results will be saved to $RESULTS_DIR"
           echo ""
 
           # Run AprilTag 3.4.5
-          ${run-apriltag-3-4-5}/bin/run-apriltag-3-4-5 "$INPUT_DIR" "$RESULTS_DIR/apriltag-3.4.5"
+          ${run-apriltag-3-4-5}/bin/run-apriltag-3-4-5 "$INPUT_DIR" "$APRILTAG_OUTPUT"
           echo ""
 
           # Run AprilTags Kaess
-          ${run-apriltags-kaess-3aea96d}/bin/run-apriltags-kaess-3aea96d "$INPUT_DIR" "$RESULTS_DIR/apriltags-kaess-3aea96d"
+          ${run-apriltags-kaess-3aea96d}/bin/run-apriltags-kaess-3aea96d "$INPUT_DIR" "$KAESS_OUTPUT"
           echo ""
 
           # Run Kornia-rs AprilTag
-          ${run-kornia-rs-apriltag}/bin/run-kornia-rs-apriltag "$INPUT_DIR" "$RESULTS_DIR/kornia-rs-apriltag"
+          ${run-kornia-rs-apriltag}/bin/run-kornia-rs-apriltag "$INPUT_DIR" "$KORNIA_OUTPUT"
           echo ""
 
           echo "All detectors completed!"

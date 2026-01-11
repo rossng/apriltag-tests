@@ -35,7 +35,47 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  detect-and-compare:
+  # Run detectors on each architecture
+  detect:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x86_64-linux
+          - os: macos-latest
+            arch: aarch64-darwin
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@v9
+
+    - name: Setup Nix cache
+      uses: DeterminateSystems/magic-nix-cache-action@v2
+
+    - name: Create results directory
+      run: mkdir -p results
+
+    - name: Run all detectors
+      run: |
+        nix run .#run-all-detectors -- data results "${{ matrix.arch }}"
+
+    - name: Upload detection results
+      uses: actions/upload-artifact@v4
+      with:
+        name: results-${{ matrix.arch }}
+        path: results/
+        retention-days: 1
+
+  # Combine results and build comparison
+  compare:
+    needs: detect
     runs-on: ubuntu-latest
 
     steps:
@@ -56,9 +96,17 @@ jobs:
         rm -rf results/
         mkdir -p results/
 
-    - name: Run all detectors
+    - name: Download all detection results
+      uses: actions/download-artifact@v4
+      with:
+        path: results/
+        pattern: results-*
+        merge-multiple: true
+
+    - name: List results
       run: |
-        nix run .#run-all-detectors
+        echo "Combined results:"
+        ls -la results/
 
     - name: Commit detector results if changed
       run: |
@@ -76,7 +124,10 @@ jobs:
 
     - name: Build comparison site
       run: |
-        nix run .#compare-detectors
+        # Build list of all detector@arch combinations
+        DETECTORS=$(ls -1 results/ | tr '\n' ',' | sed 's/,$//')
+        echo "Detected combinations: $DETECTORS"
+        DETECTORS="$DETECTORS" nix run .#compare-detectors
 
     - name: Prepare GitHub Pages content
       if: github.ref == 'refs/heads/main'

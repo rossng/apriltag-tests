@@ -1,5 +1,6 @@
 ---
 import type { SerializableSummary } from '../lib/types';
+import { parseDetectorName, formatArch } from '../lib/types';
 
 interface Props {
   name: string;
@@ -8,6 +9,7 @@ interface Props {
 
 const { name, summary } = Astro.props;
 
+const detectorInfo = parseDetectorName(name);
 const f1Class = summary.f1Score >= 0.9 ? 'good' : (summary.f1Score >= 0.7 ? 'warning' : 'error');
 
 const totalAvg = summary.timing.avgImageLoadMs + summary.timing.avgTotalDetectionMs;
@@ -20,7 +22,10 @@ const sortedFamilyTimings = summary.timing.familyTimings.sort((a, b) => a.family
 ---
 
 <div class="detector-card">
-  <h3>{name}</h3>
+  <h3>
+    {detectorInfo.baseName}
+    {detectorInfo.arch && <span class="arch-badge">{formatArch(detectorInfo.arch)}</span>}
+  </h3>
 
   {summary.supportedFamilies.length > 0 && (
     <div class="family-breakdown">
