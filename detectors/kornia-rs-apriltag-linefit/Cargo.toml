@@ -1,0 +1,13 @@
+[package]
+name = "kornia-apriltag-linefit-detector"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+kornia-apriltag = { git = "https://github.com/kornia/kornia-rs", rev = "d1eb03e31c6d6322404dc1bcef54b54306776d57" }
+kornia-image = { git = "https://github.com/kornia/kornia-rs", rev = "d1eb03e31c6d6322404dc1bcef54b54306776d57" }
+kornia-imgproc = { git = "https://github.com/kornia/kornia-rs", rev = "d1eb03e31c6d6322404dc1bcef54b54306776d57" }
+kornia-io = { git = "https://github.com/kornia/kornia-rs", rev = "d1eb03e31c6d6322404dc1bcef54b54306776d57" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
