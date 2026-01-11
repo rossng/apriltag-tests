@@ -13,33 +13,33 @@
     }
   ],
   "timings": {
-    "image_load_ms": 11.430946,
-    "total_detection_ms": 1133.511872,
+    "image_load_ms": 11.748925,
+    "total_detection_ms": 1226.501857,
     "family_timings": [
       {
         "family": "tag36h11",
-        "initialization_ms": 0.000712,
-        "detection_ms": 229.245945
+        "initialization_ms": 0.001572,
+        "detection_ms": 254.075505
       },
       {
         "family": "tag36h9",
-        "initialization_ms": 0.004568,
-        "detection_ms": 240.585671
+        "initialization_ms": 0.005831,
+        "detection_ms": 261.144104
       },
       {
         "family": "tag25h9",
-        "initialization_ms": 0.000211,
-        "detection_ms": 215.100802
+        "initialization_ms": 0.000240,
+        "detection_ms": 231.619800
       },
       {
         "family": "tag25h7",
-        "initialization_ms": 0.003196,
-        "detection_ms": 226.884669
+        "initialization_ms": 0.003206,
+        "detection_ms": 234.050763
       },
       {
         "family": "tag16h5",
-        "initialization_ms": 0.000261,
-        "detection_ms": 221.685837
+        "initialization_ms": 0.000331,
+        "detection_ms": 245.600505
       }
     ]
   }

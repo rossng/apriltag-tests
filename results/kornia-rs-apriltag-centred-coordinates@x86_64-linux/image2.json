@@ -1,0 +1,100 @@
+{
+  "image": "image2.jpg",
+  "detections": [
+    {
+      "tag_id": 10,
+      "tag_family": "tag16h5",
+      "corners": [
+        {
+          "x": 3072.5295,
+          "y": 1372.3038
+        },
+        {
+          "x": 3062.5576,
+          "y": 1377.05
+        },
+        {
+          "x": 3038.4534,
+          "y": 1377.2942
+        },
+        {
+          "x": 3031.162,
+          "y": 1372.1355
+        }
+      ]
+    },
+    {
+      "tag_id": 15,
+      "tag_family": "tag16h5",
+      "corners": [
+        {
+          "x": 2219.2693,
+          "y": 4073.5022
+        },
+        {
+          "x": 2193.1604,
+          "y": 4076.9795
+        },
+        {
+          "x": 2200.0955,
+          "y": 4076.9795
+        },
+        {
+          "x": 2214.234,
+          "y": 4067.053
+        }
+      ]
+    }
+  ],
+  "timings": {
+    "image_load_ms": 54.435578,
+    "total_detection_ms": 2692.670126,
+    "family_timings": [
+      {
+        "family": "tag36h11",
+        "initialization_ms": 7.534066,
+        "detection_ms": 298.05871
+      },
+      {
+        "family": "tag36h10",
+        "initialization_ms": 7.177852000000001,
+        "detection_ms": 296.391692
+      },
+      {
+        "family": "tag25h9",
+        "initialization_ms": 7.237213000000001,
+        "detection_ms": 297.256855
+      },
+      {
+        "family": "tag16h5",
+        "initialization_ms": 7.152645,
+        "detection_ms": 296.95263700000004
+      },
+      {
+        "family": "tagCircle21h7",
+        "initialization_ms": 7.058549,
+        "detection_ms": 288.40411
+      },
+      {
+        "family": "tagCircle49h12",
+        "initialization_ms": 8.115069,
+        "detection_ms": 288.376499
+      },
+      {
+        "family": "tagCustom48h12",
+        "initialization_ms": 3.494856,
+        "detection_ms": 289.763124
+      },
+      {
+        "family": "tagStandard41h12",
+        "initialization_ms": 7.112741,
+        "detection_ms": 286.631305
+      },
+      {
+        "family": "tagStandard52h13",
+        "initialization_ms": 7.728569,
+        "detection_ms": 288.223634
+      }
+    ]
+  }
+}
