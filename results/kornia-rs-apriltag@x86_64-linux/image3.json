@@ -2,6 +2,28 @@
   "image": "image3.jpg",
   "detections": [
     {
+      "tag_id": 5,
+      "tag_family": "tag16h5",
+      "corners": [
+        {
+          "x": 596.121,
+          "y": 545.71826
+        },
+        {
+          "x": 607.8344,
+          "y": 549.5841
+        },
+        {
+          "x": 609.0185,
+          "y": 688.67914
+        },
+        {
+          "x": 605.7163,
+          "y": 574.1099
+        }
+      ]
+    },
+    {
       "tag_id": 26,
       "tag_family": "tag16h5",
       "corners": [
@@ -24,46 +46,90 @@
       ]
     },
     {
-      "tag_id": 16,
-      "tag_family": "tagCircle21h7",
+      "tag_id": 26,
+      "tag_family": "tag16h5",
       "corners": [
         {
-          "x": 504.54584,
-          "y": 516.97076
+          "x": 841.9926,
+          "y": 594.46484
         },
         {
-          "x": 505.20706,
-          "y": 563.18054
+          "x": 862.96075,
+          "y": 603.1501
         },
         {
-          "x": 477.06735,
-          "y": 552.5628
+          "x": 848.8421,
+          "y": 607.48096
         },
         {
-          "x": 475.9154,
-          "y": 503.81628
+          "x": 849.1008,
+          "y": 596.8307
         }
       ]
     },
     {
-      "tag_id": 16191,
+      "tag_id": 16383,
       "tag_family": "tagStandard52h13",
       "corners": [
         {
-          "x": 504.54584,
-          "y": 516.97076
+          "x": 575.7589,
+          "y": 1062.2986
         },
         {
-          "x": 505.20706,
-          "y": 563.18054
+          "x": 576.9993,
+          "y": 1098.8838
         },
         {
-          "x": 477.06735,
-          "y": 552.5628
+          "x": 557.3659,
+          "y": 1115.9922
         },
         {
-          "x": 475.9154,
-          "y": 503.81628
+          "x": 555.1229,
+          "y": 1078.1104
+        }
+      ]
+    },
+    {
+      "tag_id": 16359,
+      "tag_family": "tagStandard52h13",
+      "corners": [
+        {
+          "x": 334.7873,
+          "y": 707.26245
+        },
+        {
+          "x": 339.27502,
+          "y": 766.1163
+        },
+        {
+          "x": 290.51764,
+          "y": 769.4578
+        },
+        {
+          "x": 285.5994,
+          "y": 706.6794
+        }
+      ]
+    },
+    {
+      "tag_id": 16382,
+      "tag_family": "tagStandard52h13",
+      "corners": [
+        {
+          "x": 233.87689,
+          "y": 1306.657
+        },
+        {
+          "x": 242.96887,
+          "y": 1364.8077
+        },
+        {
+          "x": 181.45172,
+          "y": 1418.1885
+        },
+        {
+          "x": 170.92662,
+          "y": 1356.3505
         }
       ]
     },
@@ -112,28 +178,6 @@
       ]
     },
     {
-      "tag_id": 16359,
-      "tag_family": "tagStandard52h13",
-      "corners": [
-        {
-          "x": 334.7873,
-          "y": 707.26245
-        },
-        {
-          "x": 339.27502,
-          "y": 766.1163
-        },
-        {
-          "x": 290.51764,
-          "y": 769.4578
-        },
-        {
-          "x": 285.5994,
-          "y": 706.6794
-        }
-      ]
-    },
-    {
       "tag_id": 16192,
       "tag_family": "tagStandard52h13",
       "corners": [
@@ -152,28 +196,6 @@
         {
           "x": 620.0775,
           "y": 410.94214
-        }
-      ]
-    },
-    {
-      "tag_id": 16382,
-      "tag_family": "tagStandard52h13",
-      "corners": [
-        {
-          "x": 233.87689,
-          "y": 1306.657
-        },
-        {
-          "x": 242.96887,
-          "y": 1364.8077
-        },
-        {
-          "x": 181.45172,
-          "y": 1418.1885
-        },
-        {
-          "x": 170.92662,
-          "y": 1356.3505
         }
       ]
     },
@@ -200,6 +222,28 @@
       ]
     },
     {
+      "tag_id": 16191,
+      "tag_family": "tagStandard52h13",
+      "corners": [
+        {
+          "x": 504.54584,
+          "y": 516.97076
+        },
+        {
+          "x": 505.20706,
+          "y": 563.18054
+        },
+        {
+          "x": 477.06735,
+          "y": 552.5628
+        },
+        {
+          "x": 475.9154,
+          "y": 503.81628
+        }
+      ]
+    },
+    {
       "tag_id": 16127,
       "tag_family": "tagStandard52h13",
       "corners": [
@@ -220,78 +264,56 @@
           "y": 754.98486
         }
       ]
-    },
-    {
-      "tag_id": 16383,
-      "tag_family": "tagStandard52h13",
-      "corners": [
-        {
-          "x": 575.7589,
-          "y": 1062.2986
-        },
-        {
-          "x": 576.9993,
-          "y": 1098.8838
-        },
-        {
-          "x": 557.3659,
-          "y": 1115.9922
-        },
-        {
-          "x": 555.1229,
-          "y": 1078.1104
-        }
-      ]
     }
   ],
   "timings": {
-    "image_load_ms": 11.854602,
-    "total_detection_ms": 400.090287,
+    "image_load_ms": 12.015505,
+    "total_detection_ms": 404.645536,
     "family_timings": [
       {
         "family": "tag36h11",
-        "initialization_ms": 2.262213,
-        "detection_ms": 48.415851
+        "initialization_ms": 2.421135,
+        "detection_ms": 49.522806
       },
       {
         "family": "tag36h10",
-        "initialization_ms": 2.1304969999999996,
-        "detection_ms": 46.056434
+        "initialization_ms": 2.232072,
+        "detection_ms": 46.468518
       },
       {
         "family": "tag25h9",
-        "initialization_ms": 2.089109,
-        "detection_ms": 45.259857000000004
+        "initialization_ms": 2.2997590000000003,
+        "detection_ms": 45.930045
       },
       {
         "family": "tag16h5",
-        "initialization_ms": 2.062669,
-        "detection_ms": 45.499748
+        "initialization_ms": 2.194723,
+        "detection_ms": 45.903024
       },
       {
         "family": "tagCircle21h7",
-        "initialization_ms": 2.056156,
-        "detection_ms": 37.934321
+        "initialization_ms": 2.2079869999999997,
+        "detection_ms": 38.429048
       },
       {
         "family": "tagCircle49h12",
-        "initialization_ms": 3.028765,
-        "detection_ms": 39.691656
+        "initialization_ms": 3.178036,
+        "detection_ms": 39.556340000000006
       },
       {
         "family": "tagCustom48h12",
-        "initialization_ms": 2.869325,
-        "detection_ms": 38.99163
+        "initialization_ms": 2.781356,
+        "detection_ms": 38.948907999999996
       },
       {
         "family": "tagStandard41h12",
-        "initialization_ms": 2.120969,
-        "detection_ms": 38.354429
+        "initialization_ms": 2.259904,
+        "detection_ms": 38.51085
       },
       {
         "family": "tagStandard52h13",
-        "initialization_ms": 2.821676,
-        "detection_ms": 38.444982
+        "initialization_ms": 2.922329,
+        "detection_ms": 38.878696
       }
     ]
   }
