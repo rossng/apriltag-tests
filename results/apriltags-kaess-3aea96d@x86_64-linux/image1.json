@@ -1,0 +1,46 @@
+{
+  "image": "image1.jpg",
+  "detections": [
+    {
+      "tag_id": 1,
+      "tag_family": "tag16h5",
+      "corners": [
+        {"x": 754.299500, "y": 1065.072388},
+        {"x": 771.085327, "y": 1061.537842},
+        {"x": 771.604492, "y": 1054.490479},
+        {"x": 761.037598, "y": 1053.341064}
+      ]
+    }
+  ],
+  "timings": {
+    "image_load_ms": 9.544768,
+    "total_detection_ms": 658.998058,
+    "family_timings": [
+      {
+        "family": "tag36h11",
+        "initialization_ms": 0.001002,
+        "detection_ms": 129.667396
+      },
+      {
+        "family": "tag36h9",
+        "initialization_ms": 0.006022,
+        "detection_ms": 134.760734
+      },
+      {
+        "family": "tag25h9",
+        "initialization_ms": 0.000140,
+        "detection_ms": 130.976929
+      },
+      {
+        "family": "tag25h7",
+        "initialization_ms": 0.001863,
+        "detection_ms": 132.975737
+      },
+      {
+        "family": "tag16h5",
+        "initialization_ms": 0.000260,
+        "detection_ms": 130.607975
+      }
+    ]
+  }
+}

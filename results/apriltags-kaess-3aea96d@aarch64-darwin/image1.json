@@ -1,0 +1,36 @@
+{
+  "image": "image1.jpg",
+  "detections": [
+  ],
+  "timings": {
+    "image_load_ms": 25.211625,
+    "total_detection_ms": 834.594248,
+    "family_timings": [
+      {
+        "family": "tag36h11",
+        "initialization_ms": 0.003208,
+        "detection_ms": 229.936750
+      },
+      {
+        "family": "tag36h9",
+        "initialization_ms": 0.008416,
+        "detection_ms": 167.230375
+      },
+      {
+        "family": "tag25h9",
+        "initialization_ms": 0.001417,
+        "detection_ms": 125.064125
+      },
+      {
+        "family": "tag25h7",
+        "initialization_ms": 0.003583,
+        "detection_ms": 151.023541
+      },
+      {
+        "family": "tag16h5",
+        "initialization_ms": 0.001250,
+        "detection_ms": 161.321583
+      }
+    ]
+  }
+}
