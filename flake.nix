@@ -158,36 +158,13 @@
           '';
         };
 
-        # Kornia detector programs
-        kornia-apriltag-0-1-10-detector = makeKorniaDetector {
-          name = "kornia-apriltag-0-1-10";
-          src = ./detectors/kornia-apriltag-0.1.10;
+        # Kornia detector program
+        kornia-rs-apriltag-detector = makeKorniaDetector {
+          name = "kornia-rs-apriltag";
+          src = ./detectors/kornia-rs-apriltag;
           sourceBinary = "kornia-apriltag-detector";
-          description = "AprilTag detector using kornia-apriltag 0.1.10";
-        };
-
-        kornia-rs-apriltag-experiment-detector = makeKorniaDetector {
-          name = "kornia-rs-apriltag-experiment";
-          src = ./detectors/kornia-rs-apriltag-experiment;
-          sourceBinary = "kornia-apriltag-detector";
-          outputHash = "sha256-nNGNISNLEEgL6ltobNuMqLqoHznnfLxaywhTSSo1fKY=";
-          description = "AprilTag detector using kornia-rs apriltag-experiment branch";
-        };
-
-        kornia-rs-apriltag-centred-coordinates-detector = makeKorniaDetector {
-          name = "kornia-rs-apriltag-centred-coordinates";
-          src = ./detectors/kornia-rs-apriltag-centred-coordinates;
-          sourceBinary = "kornia-apriltag-centred-coordinates-detector";
-          outputHash = "sha256-3D9vyslsmJv2UwZA2jZCDHfIRkSMjMeq9Av9pryx998=";
-          description = "AprilTag detector using kornia-rs centred-coordinates branch";
-        };
-
-        kornia-rs-apriltag-other-fixes-detector = makeKorniaDetector {
-          name = "kornia-rs-apriltag-other-fixes";
-          src = ./detectors/kornia-rs-apriltag-other-fixes;
-          sourceBinary = "kornia-apriltag-other-fixes-detector";
-          outputHash = "sha256-FrdtSBG9otoGpbMADWlRIFw+NtgpRjWb3BHeExcDD4k=";
-          description = "AprilTag detector using kornia-rs other-fixes branch";
+          outputHash = "sha256-bH86Z+ihUQlomr1sSG4GzamKJMCXej1lRZFohGf1+HI=";
+          description = "AprilTag detector using kornia-rs (commit 76fb225)";
         };
 
         # EXIF stripping utility
@@ -210,32 +187,11 @@
           defaultOutput = "apriltags-kaess-3aea96d";
         };
 
-        run-kornia-apriltag-0-1-10 = makeDetectorRunner {
-          name = "kornia-apriltag-0-1-10";
-          detector = kornia-apriltag-0-1-10-detector;
-          displayName = "Kornia AprilTag (0.1.10)";
-          defaultOutput = "kornia-apriltag-0.1.10";
-        };
-
-        run-kornia-rs-apriltag-experiment = makeDetectorRunner {
-          name = "kornia-rs-apriltag-experiment";
-          detector = kornia-rs-apriltag-experiment-detector;
-          displayName = "Kornia-rs AprilTag (apriltag-experiment)";
-          defaultOutput = "kornia-rs-apriltag-experiment";
-        };
-
-        run-kornia-rs-apriltag-centred-coordinates = makeDetectorRunner {
-          name = "kornia-rs-apriltag-centred-coordinates";
-          detector = kornia-rs-apriltag-centred-coordinates-detector;
-          displayName = "Kornia-rs AprilTag (centred-coordinates)";
-          defaultOutput = "kornia-rs-apriltag-centred-coordinates";
-        };
-
-        run-kornia-rs-apriltag-other-fixes = makeDetectorRunner {
-          name = "kornia-rs-apriltag-other-fixes";
-          detector = kornia-rs-apriltag-other-fixes-detector;
-          displayName = "Kornia-rs AprilTag (other-fixes)";
-          defaultOutput = "kornia-rs-apriltag-other-fixes";
+        run-kornia-rs-apriltag = makeDetectorRunner {
+          name = "kornia-rs-apriltag";
+          detector = kornia-rs-apriltag-detector;
+          displayName = "Kornia-rs AprilTag";
+          defaultOutput = "kornia-rs-apriltag";
         };
 
         # Run all detectors in sequence
@@ -255,20 +211,8 @@
           ${run-apriltags-kaess-3aea96d}/bin/run-apriltags-kaess-3aea96d "$INPUT_DIR" "$RESULTS_DIR/apriltags-kaess-3aea96d"
           echo ""
 
-          # Run Kornia AprilTag
-          ${run-kornia-apriltag-0-1-10}/bin/run-kornia-apriltag-0-1-10 "$INPUT_DIR" "$RESULTS_DIR/kornia-apriltag-0.1.10"
-          echo ""
-
-          # Run Kornia-rs AprilTag (apriltag-experiment)
-          ${run-kornia-rs-apriltag-experiment}/bin/run-kornia-rs-apriltag-experiment "$INPUT_DIR" "$RESULTS_DIR/kornia-rs-apriltag-experiment"
-          echo ""
-
-          # Run Kornia-rs AprilTag (centred-coordinates)
-          ${run-kornia-rs-apriltag-centred-coordinates}/bin/run-kornia-rs-apriltag-centred-coordinates "$INPUT_DIR" "$RESULTS_DIR/kornia-rs-apriltag-centred-coordinates"
-          echo ""
-
-          # Run Kornia-rs AprilTag (other-fixes)
-          ${run-kornia-rs-apriltag-other-fixes}/bin/run-kornia-rs-apriltag-other-fixes "$INPUT_DIR" "$RESULTS_DIR/kornia-rs-apriltag-other-fixes"
+          # Run Kornia-rs AprilTag
+          ${run-kornia-rs-apriltag}/bin/run-kornia-rs-apriltag "$INPUT_DIR" "$RESULTS_DIR/kornia-rs-apriltag"
           echo ""
 
           echo "All detectors completed!"
@@ -344,21 +288,21 @@
             --ground-truth "../../$GROUND_TRUTH_DIR" \
             --results "../../$RESULTS_DIR" \
             --data "../../$DATA_DIR" \
-            --detectors apriltag-3.4.5 apriltags-kaess-3aea96d kornia-apriltag-0.1.10 kornia-rs-apriltag-experiment kornia-rs-apriltag-centred-coordinates kornia-rs-apriltag-other-fixes \
+            --detectors apriltag-3.4.5 apriltags-kaess-3aea96d kornia-rs-apriltag \
             --output "../../$OUTPUT_FILE"
         '';
 
       in
       {
         packages = {
-          inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5 edit-ground-truth apriltags-kaess-3aea96d apriltags-kaess-3aea96d-detector run-apriltags-kaess-3aea96d kornia-apriltag-0-1-10-detector run-kornia-apriltag-0-1-10 kornia-rs-apriltag-experiment-detector run-kornia-rs-apriltag-experiment kornia-rs-apriltag-centred-coordinates-detector run-kornia-rs-apriltag-centred-coordinates kornia-rs-apriltag-other-fixes-detector run-kornia-rs-apriltag-other-fixes run-all-detectors compare-detectors;
+          inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5 edit-ground-truth apriltags-kaess-3aea96d apriltags-kaess-3aea96d-detector run-apriltags-kaess-3aea96d kornia-rs-apriltag-detector run-kornia-rs-apriltag run-all-detectors compare-detectors;
         };
 
         apps = pkgs.lib.mapAttrs (name: pkg: {
           type = "app";
           program = "${pkg}/bin/${name}";
         }) {
-          inherit strip-exif run-apriltag-3-4-5 run-apriltags-kaess-3aea96d run-kornia-apriltag-0-1-10 run-kornia-rs-apriltag-experiment run-kornia-rs-apriltag-centred-coordinates run-kornia-rs-apriltag-other-fixes run-all-detectors edit-ground-truth compare-detectors;
+          inherit strip-exif run-apriltag-3-4-5 run-apriltags-kaess-3aea96d run-kornia-rs-apriltag run-all-detectors edit-ground-truth compare-detectors;
         };
 
         devShells.default = pkgs.mkShell {
@@ -374,15 +318,12 @@
             echo "  exiftool <file>           - Inspect EXIF data"
             echo ""
             echo "Available apps (use 'nix run .#<app>'):"
-            echo "  run-apriltag-3-4-5                       - Run AprilTag 3.4.5 detector on data/"
-            echo "  run-apriltags-kaess-3aea96d              - Run AprilTags Kaess (3aea96d) detector on data/"
-            echo "  run-kornia-apriltag-0-1-10               - Run Kornia AprilTag (0.1.10) detector on data/"
-            echo "  run-kornia-rs-apriltag-experiment        - Run Kornia-rs AprilTag (apriltag-experiment) detector on data/"
-            echo "  run-kornia-rs-apriltag-centred-coordinates - Run Kornia-rs AprilTag (centred-coordinates) detector on data/"
-            echo "  run-kornia-rs-apriltag-other-fixes       - Run Kornia-rs AprilTag (other-fixes) detector on data/"
-            echo "  run-all-detectors                        - Run all detectors in sequence"
-            echo "  edit-ground-truth                        - Open ground truth annotation tool"
-            echo "  compare-detectors                        - Generate comparison report vs ground truth"
+            echo "  run-apriltag-3-4-5        - Run AprilTag 3.4.5 detector on data/"
+            echo "  run-apriltags-kaess-3aea96d - Run AprilTags Kaess (3aea96d) detector on data/"
+            echo "  run-kornia-rs-apriltag    - Run Kornia-rs AprilTag detector on data/"
+            echo "  run-all-detectors         - Run all detectors in sequence"
+            echo "  edit-ground-truth         - Open ground truth annotation tool"
+            echo "  compare-detectors         - Generate comparison report vs ground truth"
           '';
         };
       }

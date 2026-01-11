@@ -3,7 +3,7 @@ use kornia_apriltag::{AprilTagDecoder, DecodeTagsConfig};
 use kornia_apriltag::family::TagFamilyKind;
 use kornia_image::{Image, ImageSize};
 use kornia_image::allocator::CpuAllocator;
-use kornia_imgproc::color::gray_from_rgb;
+use kornia_imgproc::color::gray_from_rgb_u8;
 use kornia_io::jpeg::read_image_jpeg_rgb8;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -68,25 +68,19 @@ fn detect_in_image(
     family_kind: &TagFamilyKind,
 ) -> Result<Vec<Detection>> {
     // Load image as RGB8
-    let img_rgb: Image<u8, 3, CpuAllocator> = read_image_jpeg_rgb8(image_path)
+    let img_rgb = read_image_jpeg_rgb8(image_path)
         .context("Failed to load image")?;
 
-    // Convert to f32 and scale to [0, 1]
-    let img_rgb_f32: Image<f32, 3, CpuAllocator> = img_rgb.cast_and_scale::<f32>(1.0f32 / 255.0f32)?;
-
-    // Convert to grayscale
-    let mut img_gray_f32 = Image::<f32, 1, CpuAllocator>::from_size_val(img_rgb_f32.size(), 0.0, CpuAllocator)?;
-    gray_from_rgb(&img_rgb_f32, &mut img_gray_f32)?;
-
-    // Convert back to u8 for the detector
-    let img_gray: Image<u8, 1, CpuAllocator> = img_gray_f32.cast_and_scale::<u8>(255u8)?;
+    // Convert to grayscale directly from u8
+    let mut img_gray = Image::<u8, 1, CpuAllocator>::from_size_val(img_rgb.size(), 0, CpuAllocator)?;
+    gray_from_rgb_u8(&img_rgb, &mut img_gray)?;
 
     // Create a fresh decoder for this image using the ACTUAL image size
     let img_size = ImageSize {
         width: img_gray.width(),
         height: img_gray.height(),
     };
-    let config = DecodeTagsConfig::new(vec![family_kind.clone()]);
+    let config = DecodeTagsConfig::new(vec![family_kind.clone()])?;
     let mut decoder = AprilTagDecoder::new(config, img_size)?;
 
     // Detect tags
