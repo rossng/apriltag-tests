@@ -221,5 +221,51 @@
         {"x": 960.282898, "y": 225.747589}
       ]
     }
-  ]
+  ],
+  "timings": {
+    "image_load_ms": 9.777125,
+    "total_detection_ms": 1989.323717,
+    "family_timings": [
+      {
+        "family": "tag36h11",
+        "initialization_ms": 6.973755,
+        "detection_ms": 23.983888
+      },
+      {
+        "family": "tag25h9",
+        "initialization_ms": 0.165940,
+        "detection_ms": 23.760901
+      },
+      {
+        "family": "tag16h5",
+        "initialization_ms": 0.037440,
+        "detection_ms": 23.536642
+      },
+      {
+        "family": "tagCircle21h7",
+        "initialization_ms": 0.092102,
+        "detection_ms": 28.278064
+      },
+      {
+        "family": "tagCircle49h12",
+        "initialization_ms": 69.988354,
+        "detection_ms": 28.681328
+      },
+      {
+        "family": "tagCustom48h12",
+        "initialization_ms": 1603.716435,
+        "detection_ms": 28.519292
+      },
+      {
+        "family": "tagStandard41h12",
+        "initialization_ms": 42.010272,
+        "detection_ms": 28.480479
+      },
+      {
+        "family": "tagStandard52h13",
+        "initialization_ms": 52.567620,
+        "detection_ms": 28.531205
+      }
+    ]
+  }
 }

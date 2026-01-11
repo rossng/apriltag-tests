@@ -91,5 +91,36 @@
         {"x": 808.978088, "y": 1225.470581}
       ]
     }
-  ]
+  ],
+  "timings": {
+    "image_load_ms": 50.910714,
+    "total_detection_ms": 5234.163667,
+    "family_timings": [
+      {
+        "family": "tag36h11",
+        "initialization_ms": 0.001923,
+        "detection_ms": 1040.199541
+      },
+      {
+        "family": "tag36h9",
+        "initialization_ms": 0.003476,
+        "detection_ms": 1065.240117
+      },
+      {
+        "family": "tag25h9",
+        "initialization_ms": 0.000291,
+        "detection_ms": 1050.021951
+      },
+      {
+        "family": "tag25h7",
+        "initialization_ms": 0.003887,
+        "detection_ms": 1046.512853
+      },
+      {
+        "family": "tag16h5",
+        "initialization_ms": 0.000340,
+        "detection_ms": 1032.179288
+      }
+    ]
+  }
 }
