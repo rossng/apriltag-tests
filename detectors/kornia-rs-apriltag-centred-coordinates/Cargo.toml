@@ -1,0 +1,13 @@
+[package]
+name = "kornia-apriltag-centred-coordinates-detector"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+kornia-apriltag = { git = "https://github.com/rossng/kornia-rs", rev = "426dd40a21a455293b8bdde20f973726030c6697" }
+kornia-image = { git = "https://github.com/rossng/kornia-rs", rev = "426dd40a21a455293b8bdde20f973726030c6697" }
+kornia-imgproc = { git = "https://github.com/rossng/kornia-rs", rev = "426dd40a21a455293b8bdde20f973726030c6697" }
+kornia-io = { git = "https://github.com/rossng/kornia-rs", rev = "426dd40a21a455293b8bdde20f973726030c6697" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"

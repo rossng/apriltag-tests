@@ -176,6 +176,15 @@
           description = "AprilTag detector using kornia-rs linefit branch (commit d1eb03e)";
         };
 
+        # Kornia detector program (centred-coordinates branch)
+        kornia-rs-apriltag-centred-coordinates-detector = makeKorniaDetector {
+          name = "kornia-rs-apriltag-centred-coordinates";
+          src = ./detectors/kornia-rs-apriltag-centred-coordinates;
+          sourceBinary = "kornia-apriltag-centred-coordinates-detector";
+          outputHash = "sha256-SoEqDRMIJPhd6/naCWMcHdi2E3dLBlPm2aolMfG6+jE=";
+          description = "AprilTag detector using kornia-rs centred-coordinates branch (commit 426dd40)";
+        };
+
         # EXIF stripping utility
         strip-exif = pkgs.writeShellScriptBin "strip-exif" ''
           ${pkgs.exiftool}/bin/exiftool -all= -overwrite_original -r data
@@ -210,6 +219,13 @@
           defaultOutput = "kornia-rs-apriltag-linefit";
         };
 
+        run-kornia-rs-apriltag-centred-coordinates = makeDetectorRunner {
+          name = "kornia-rs-apriltag-centred-coordinates";
+          detector = kornia-rs-apriltag-centred-coordinates-detector;
+          displayName = "Kornia-rs AprilTag (centred-coordinates)";
+          defaultOutput = "kornia-rs-apriltag-centred-coordinates";
+        };
+
         # Run all detectors in sequence
         run-all-detectors = pkgs.writeShellScriptBin "run-all-detectors" ''
           INPUT_DIR="''${1:-data}"
@@ -222,12 +238,14 @@
             KAESS_OUTPUT="$RESULTS_DIR/apriltags-kaess-3aea96d@$ARCH_SUFFIX"
             KORNIA_OUTPUT="$RESULTS_DIR/kornia-rs-apriltag@$ARCH_SUFFIX"
             KORNIA_LINEFIT_OUTPUT="$RESULTS_DIR/kornia-rs-apriltag-linefit@$ARCH_SUFFIX"
+            KORNIA_CENTRED_OUTPUT="$RESULTS_DIR/kornia-rs-apriltag-centred-coordinates@$ARCH_SUFFIX"
             echo "Running all detectors on $INPUT_DIR (arch: $ARCH_SUFFIX)"
           else
             APRILTAG_OUTPUT="$RESULTS_DIR/apriltag-3.4.5"
             KAESS_OUTPUT="$RESULTS_DIR/apriltags-kaess-3aea96d"
             KORNIA_OUTPUT="$RESULTS_DIR/kornia-rs-apriltag"
             KORNIA_LINEFIT_OUTPUT="$RESULTS_DIR/kornia-rs-apriltag-linefit"
+            KORNIA_CENTRED_OUTPUT="$RESULTS_DIR/kornia-rs-apriltag-centred-coordinates"
             echo "Running all detectors on $INPUT_DIR"
           fi
           echo "Results will be saved to $RESULTS_DIR"
@@ -247,6 +265,10 @@
 
           # Run Kornia-rs AprilTag (linefit)
           ${run-kornia-rs-apriltag-linefit}/bin/run-kornia-rs-apriltag-linefit "$INPUT_DIR" "$KORNIA_LINEFIT_OUTPUT"
+          echo ""
+
+          # Run Kornia-rs AprilTag (centred-coordinates)
+          ${run-kornia-rs-apriltag-centred-coordinates}/bin/run-kornia-rs-apriltag-centred-coordinates "$INPUT_DIR" "$KORNIA_CENTRED_OUTPUT"
           echo ""
 
           echo "All detectors completed!"
@@ -328,14 +350,14 @@
       in
       {
         packages = {
-          inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5 edit-ground-truth apriltags-kaess-3aea96d apriltags-kaess-3aea96d-detector run-apriltags-kaess-3aea96d kornia-rs-apriltag-detector run-kornia-rs-apriltag kornia-rs-apriltag-linefit-detector run-kornia-rs-apriltag-linefit run-all-detectors compare-detectors;
+          inherit strip-exif apriltag-3-4-5 apriltag-3-4-5-detector run-apriltag-3-4-5 edit-ground-truth apriltags-kaess-3aea96d apriltags-kaess-3aea96d-detector run-apriltags-kaess-3aea96d kornia-rs-apriltag-detector run-kornia-rs-apriltag kornia-rs-apriltag-linefit-detector run-kornia-rs-apriltag-linefit kornia-rs-apriltag-centred-coordinates-detector run-kornia-rs-apriltag-centred-coordinates run-all-detectors compare-detectors;
         };
 
         apps = pkgs.lib.mapAttrs (name: pkg: {
           type = "app";
           program = "${pkg}/bin/${name}";
         }) {
-          inherit strip-exif run-apriltag-3-4-5 run-apriltags-kaess-3aea96d run-kornia-rs-apriltag run-kornia-rs-apriltag-linefit run-all-detectors edit-ground-truth compare-detectors;
+          inherit strip-exif run-apriltag-3-4-5 run-apriltags-kaess-3aea96d run-kornia-rs-apriltag run-kornia-rs-apriltag-linefit run-kornia-rs-apriltag-centred-coordinates run-all-detectors edit-ground-truth compare-detectors;
         };
 
         devShells.default = pkgs.mkShell {
@@ -355,6 +377,7 @@
             echo "  run-apriltags-kaess-3aea96d   - Run AprilTags Kaess (3aea96d) detector on data/"
             echo "  run-kornia-rs-apriltag        - Run Kornia-rs AprilTag detector on data/"
             echo "  run-kornia-rs-apriltag-linefit - Run Kornia-rs AprilTag (linefit) detector on data/"
+            echo "  run-kornia-rs-apriltag-centred-coordinates - Run Kornia-rs AprilTag (centred-coordinates) detector on data/"
             echo "  run-all-detectors             - Run all detectors in sequence"
             echo "  edit-ground-truth             - Open ground truth annotation tool"
             echo "  compare-detectors             - Generate comparison report vs ground truth"
