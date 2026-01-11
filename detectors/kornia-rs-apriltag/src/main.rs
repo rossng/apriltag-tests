@@ -6,9 +6,9 @@ use kornia_image::allocator::CpuAllocator;
 use kornia_imgproc::color::gray_from_rgb_u8;
 use kornia_io::jpeg::read_image_jpeg_rgb8;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
+use std::time::Instant;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Corner {
@@ -23,10 +23,25 @@ struct Detection {
     corners: Vec<Corner>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct FamilyTiming {
+    family: String,
+    initialization_ms: f64,
+    detection_ms: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct Timings {
+    image_load_ms: f64,
+    total_detection_ms: f64,
+    family_timings: Vec<FamilyTiming>,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 struct DetectionResult {
     image: String,
     detections: Vec<Detection>,
+    timings: Timings,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -63,35 +78,36 @@ fn get_supported_families() -> Vec<(String, TagFamilyKind)> {
     ]
 }
 
+struct DetectionWithTiming {
+    detections: Vec<Detection>,
+    family_timing: FamilyTiming,
+}
+
 fn detect_in_image(
-    image_path: &Path,
+    img_gray: &Image<u8, 1, CpuAllocator>,
+    family_name: &str,
     family_kind: &TagFamilyKind,
-) -> Result<Vec<Detection>> {
-    // Load image as RGB8
-    let img_rgb = read_image_jpeg_rgb8(image_path)
-        .context("Failed to load image")?;
-
-    // Convert to grayscale directly from u8
-    let mut img_gray = Image::<u8, 1, CpuAllocator>::from_size_val(img_rgb.size(), 0, CpuAllocator)?;
-    gray_from_rgb_u8(&img_rgb, &mut img_gray)?;
-
-    // Create a fresh decoder for this image using the ACTUAL image size
+) -> Result<DetectionWithTiming> {
     let img_size = ImageSize {
         width: img_gray.width(),
         height: img_gray.height(),
     };
+
+    // Time initialization
+    let init_start = Instant::now();
     let config = DecodeTagsConfig::new(vec![family_kind.clone()])?;
     let mut decoder = AprilTagDecoder::new(config, img_size)?;
+    let init_duration = init_start.elapsed();
 
-    // Detect tags
-    let detections = decoder.decode(&img_gray)
+    // Time detection
+    let detect_start = Instant::now();
+    let detections = decoder.decode(img_gray)
         .context(format!("Failed to decode tags for family {:?}", family_kind))?;
+    let detect_duration = detect_start.elapsed();
 
     // Convert detections to our format
     let mut result_detections = Vec::new();
     for det in detections {
-        // Corners are in order: Bottom-left, Bottom-right, Top-right, Top-left
-        // This matches our required format (counter-clockwise from bottom-left)
         let corners = vec![
             Corner {
                 x: det.quad.corners[0].x,
@@ -118,7 +134,58 @@ fn detect_in_image(
         });
     }
 
-    Ok(result_detections)
+    Ok(DetectionWithTiming {
+        detections: result_detections,
+        family_timing: FamilyTiming {
+            family: family_name.to_string(),
+            initialization_ms: init_duration.as_secs_f64() * 1000.0,
+            detection_ms: detect_duration.as_secs_f64() * 1000.0,
+        },
+    })
+}
+
+fn process_image(
+    image_path: &Path,
+    families: &[(String, TagFamilyKind)],
+) -> Result<DetectionResult> {
+    let image_name = image_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .context("Invalid image filename")?
+        .to_string();
+
+    // Time image loading
+    let load_start = Instant::now();
+    let img_rgb = read_image_jpeg_rgb8(image_path)
+        .context("Failed to load image")?;
+    let mut img_gray = Image::<u8, 1, CpuAllocator>::from_size_val(img_rgb.size(), 0, CpuAllocator)?;
+    gray_from_rgb_u8(&img_rgb, &mut img_gray)?;
+    let load_duration = load_start.elapsed();
+
+    let mut all_detections = Vec::new();
+    let mut family_timings = Vec::new();
+    let mut total_detection_ms = 0.0;
+
+    // Process all families for this image
+    for (family_name, family_kind) in families {
+        println!("Processing {} for family {}...", image_path.display(), family_name);
+
+        let result = detect_in_image(&img_gray, family_name, family_kind)?;
+
+        total_detection_ms += result.family_timing.initialization_ms + result.family_timing.detection_ms;
+        all_detections.extend(result.detections);
+        family_timings.push(result.family_timing);
+    }
+
+    Ok(DetectionResult {
+        image: image_name,
+        detections: all_detections,
+        timings: Timings {
+            image_load_ms: load_duration.as_secs_f64() * 1000.0,
+            total_detection_ms,
+            family_timings,
+        },
+    })
 }
 
 fn main() -> Result<()> {
@@ -199,46 +266,15 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    // Store all detections per image (image_path -> detections)
-    let mut all_image_detections: HashMap<String, Vec<Detection>> = HashMap::new();
-
-    // Process each image
-    for image_path in &image_paths {
-        let path_str = image_path.to_string_lossy().to_string();
-
-        // Process all families for this image
-        for (family_name, family_kind) in &families {
-            println!("Processing {} for family {}...", image_path.display(), family_name);
-
-            let detections = detect_in_image(image_path, family_kind)?;
-
-            all_image_detections
-                .entry(path_str.clone())
-                .or_insert_with(Vec::new)
-                .extend(detections);
-        }
-    }
-
-    // Write output files
+    // Process each image and write output immediately
     let mut processed_count = 0;
-    for path in &image_paths {
-        let image_name = path
-            .file_name()
-            .and_then(|n| n.to_str())
-            .context("Invalid image filename")?;
+    for image_path in &image_paths {
+        let result = process_image(image_path, &families)?;
 
-        let path_str = path.to_string_lossy().to_string();
-        let detections = all_image_detections.get(&path_str).cloned().unwrap_or_default();
-
-        println!("Writing results for {}: {} detections", image_name, detections.len());
-
-        let result = DetectionResult {
-            image: image_name.to_string(),
-            detections,
-        };
+        println!("Writing results for {}: {} detections", result.image, result.detections.len());
 
         // Write output JSON
-        let output_filename = path
+        let output_filename = image_path
             .file_stem()
             .and_then(|s| s.to_str())
             .context("Invalid filename")?;

@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <cstring>
 #include <algorithm>
+#include <chrono>
 
 #include <opencv2/opencv.hpp>
 
@@ -30,9 +31,22 @@ struct Detection {
     std::vector<Corner> corners;
 };
 
+struct FamilyTiming {
+    std::string family;
+    double initialization_ms;
+    double detection_ms;
+};
+
+struct Timings {
+    double image_load_ms;
+    double total_detection_ms;
+    std::vector<FamilyTiming> family_timings;
+};
+
 struct DetectionResult {
     std::string image;
     std::vector<Detection> detections;
+    Timings timings;
 };
 
 std::string escape_json_string(const std::string& str) {
@@ -73,7 +87,27 @@ std::string to_json(const DetectionResult& result) {
         json += "\n";
     }
 
-    json += "  ]\n";
+    json += "  ],\n";
+
+    // Add timings
+    json += "  \"timings\": {\n";
+    json += "    \"image_load_ms\": " + std::to_string(result.timings.image_load_ms) + ",\n";
+    json += "    \"total_detection_ms\": " + std::to_string(result.timings.total_detection_ms) + ",\n";
+    json += "    \"family_timings\": [\n";
+
+    for (size_t i = 0; i < result.timings.family_timings.size(); ++i) {
+        const auto& ft = result.timings.family_timings[i];
+        json += "      {\n";
+        json += "        \"family\": \"" + escape_json_string(ft.family) + "\",\n";
+        json += "        \"initialization_ms\": " + std::to_string(ft.initialization_ms) + ",\n";
+        json += "        \"detection_ms\": " + std::to_string(ft.detection_ms) + "\n";
+        json += "      }";
+        if (i < result.timings.family_timings.size() - 1) json += ",";
+        json += "\n";
+    }
+
+    json += "    ]\n";
+    json += "  }\n";
     json += "}\n";
     return json;
 }
@@ -82,24 +116,53 @@ DetectionResult process_image(const std::string& image_path,
                               const std::vector<std::pair<std::string, AprilTags::TagCodes>>& families) {
     DetectionResult result;
     result.image = fs::path(image_path).filename().string();
+    result.timings.total_detection_ms = 0.0;
+
+    // Time image loading
+    auto load_start = std::chrono::high_resolution_clock::now();
 
     int width, height, channels;
     unsigned char* img_data = stbi_load(image_path.c_str(), &width, &height, &channels, 1);
 
     if (!img_data) {
         std::cerr << "Failed to load image: " << image_path << std::endl;
+        auto load_end = std::chrono::high_resolution_clock::now();
+        result.timings.image_load_ms = std::chrono::duration<double, std::milli>(load_end - load_start).count();
         return result;
     }
 
     // Convert to cv::Mat for Kaess library
     cv::Mat image_gray(height, width, CV_8UC1, img_data);
 
+    auto load_end = std::chrono::high_resolution_clock::now();
+    result.timings.image_load_ms = std::chrono::duration<double, std::milli>(load_end - load_start).count();
+
     // Process each family separately to show progress
     for (const auto& [family_name, tag_codes] : families) {
         std::cout << "  Detecting " << family_name << "..." << std::flush;
 
+        FamilyTiming family_timing;
+        family_timing.family = family_name;
+
+        // Time initialization
+        auto init_start = std::chrono::high_resolution_clock::now();
+
         AprilTags::TagDetector detector(tag_codes);
+
+        auto init_end = std::chrono::high_resolution_clock::now();
+        family_timing.initialization_ms = std::chrono::duration<double, std::milli>(init_end - init_start).count();
+
+        // Time detection
+        auto detect_start = std::chrono::high_resolution_clock::now();
+
         std::vector<AprilTags::TagDetection> detections = detector.extractTags(image_gray);
+
+        auto detect_end = std::chrono::high_resolution_clock::now();
+        family_timing.detection_ms = std::chrono::duration<double, std::milli>(detect_end - detect_start).count();
+
+        result.timings.total_detection_ms += family_timing.initialization_ms + family_timing.detection_ms;
+        result.timings.family_timings.push_back(family_timing);
+
         int count = detections.size();
 
         for (const auto& det : detections) {

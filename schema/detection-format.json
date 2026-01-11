@@ -4,7 +4,7 @@
   "title": "AprilTag Detection Result Format",
   "description": "Standard format for AprilTag detection results from detector programs",
   "type": "object",
-  "required": ["image", "detections"],
+  "required": ["image", "detections", "timings"],
   "properties": {
     "image": {
       "type": "string",
@@ -50,6 +50,45 @@
         },
         "additionalProperties": false
       }
+    },
+    "timings": {
+      "type": "object",
+      "description": "Timing information for the detection process",
+      "required": ["image_load_ms", "total_detection_ms", "family_timings"],
+      "properties": {
+        "image_load_ms": {
+          "type": "number",
+          "description": "Time in milliseconds to load and preprocess the image"
+        },
+        "total_detection_ms": {
+          "type": "number",
+          "description": "Total time in milliseconds for all detection operations (sum of all family timings)"
+        },
+        "family_timings": {
+          "type": "array",
+          "description": "Per-family timing breakdown",
+          "items": {
+            "type": "object",
+            "required": ["family", "initialization_ms", "detection_ms"],
+            "properties": {
+              "family": {
+                "type": "string",
+                "description": "Name of the tag family"
+              },
+              "initialization_ms": {
+                "type": "number",
+                "description": "Time in milliseconds to initialize the detector for this family"
+              },
+              "detection_ms": {
+                "type": "number",
+                "description": "Time in milliseconds to perform detection for this family"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

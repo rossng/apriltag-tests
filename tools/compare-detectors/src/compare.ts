@@ -17,9 +17,22 @@ interface Detection {
   corners: Corner[];
 }
 
+interface FamilyTiming {
+  family: string;
+  initialization_ms: number;
+  detection_ms: number;
+}
+
+interface Timings {
+  image_load_ms: number;
+  total_detection_ms: number;
+  family_timings: FamilyTiming[];
+}
+
 interface DetectionFile {
   image: string;
   detections: Detection[];
+  timings?: Timings;
 }
 
 interface Manifest {
@@ -47,6 +60,16 @@ interface ImageResult {
   detectorResults: Map<string, DetectionKey[]>;
   missed: Map<string, Set<DetectionKey>>;
   falsePositives: Map<string, Set<DetectionKey>>;
+  timings: Map<string, Timings | null>;
+}
+
+interface TimingSummary {
+  avgImageLoadMs: number;
+  avgTotalDetectionMs: number;
+  totalImageLoadMs: number;
+  totalDetectionMs: number;
+  imageCount: number;
+  familyTimings: Map<string, { avgInit: number; avgDetect: number; count: number }>;
 }
 
 interface Summary {
@@ -61,6 +84,7 @@ interface Summary {
   missedByFamily: Map<string, number>;
   fpByFamily: Map<string, number>;
   supportedFamilies: string[];
+  timing: TimingSummary;
 }
 
 function loadDetections(jsonPath: string): DetectionFile | null {
@@ -114,7 +138,8 @@ function collectResults(
       groundTruth: toDetectionKeys(gtData.detections),
       detectorResults: new Map(),
       missed: new Map(),
-      falsePositives: new Map()
+      falsePositives: new Map(),
+      timings: new Map()
     };
 
     // Load detector results
@@ -126,11 +151,14 @@ function collectResults(
         const detData = loadDetections(detectorFile);
         if (detData) {
           result.detectorResults.set(detectorName, toDetectionKeys(detData.detections));
+          result.timings.set(detectorName, detData.timings || null);
         } else {
           result.detectorResults.set(detectorName, []);
+          result.timings.set(detectorName, null);
         }
       } else {
         result.detectorResults.set(detectorName, []);
+        result.timings.set(detectorName, null);
       }
     }
 
@@ -184,6 +212,12 @@ function computeSummary(
     const missedByFamily = new Map<string, number>();
     const fpByFamily = new Map<string, number>();
 
+    // Timing aggregation
+    let totalImageLoadMs = 0;
+    let totalDetectionMs = 0;
+    let imageCount = 0;
+    const familyTimingAgg = new Map<string, { totalInit: number; totalDetect: number; count: number }>();
+
     for (const result of results.values()) {
       totalGt += result.groundTruth.length;
       totalDetected += (result.detectorResults.get(detectorName) || []).length;
@@ -201,6 +235,22 @@ function computeSummary(
       for (const det of fps) {
         fpByFamily.set(det.tagFamily, (fpByFamily.get(det.tagFamily) || 0) + 1);
       }
+
+      // Aggregate timing
+      const timing = result.timings.get(detectorName);
+      if (timing) {
+        totalImageLoadMs += timing.image_load_ms;
+        totalDetectionMs += timing.total_detection_ms;
+        imageCount++;
+
+        for (const ft of timing.family_timings) {
+          const existing = familyTimingAgg.get(ft.family) || { totalInit: 0, totalDetect: 0, count: 0 };
+          existing.totalInit += ft.initialization_ms;
+          existing.totalDetect += ft.detection_ms;
+          existing.count++;
+          familyTimingAgg.set(ft.family, existing);
+        }
+      }
     }
 
     const truePositives = totalGt - totalMissed;
@@ -213,6 +263,16 @@ function computeSummary(
     const manifest = loadManifest(manifestPath);
     const supportedFamilies = manifest?.supported_families || [];
 
+    // Compute timing averages
+    const familyTimings = new Map<string, { avgInit: number; avgDetect: number; count: number }>();
+    for (const [family, agg] of familyTimingAgg) {
+      familyTimings.set(family, {
+        avgInit: agg.count > 0 ? agg.totalInit / agg.count : 0,
+        avgDetect: agg.count > 0 ? agg.totalDetect / agg.count : 0,
+        count: agg.count
+      });
+    }
+
     summaries.set(detectorName, {
       totalGroundTruth: totalGt,
       totalDetected,
@@ -224,7 +284,15 @@ function computeSummary(
       f1Score,
       missedByFamily,
       fpByFamily,
-      supportedFamilies
+      supportedFamilies,
+      timing: {
+        avgImageLoadMs: imageCount > 0 ? totalImageLoadMs / imageCount : 0,
+        avgTotalDetectionMs: imageCount > 0 ? totalDetectionMs / imageCount : 0,
+        totalImageLoadMs,
+        totalDetectionMs,
+        imageCount,
+        familyTimings
+      }
     });
   }
 
@@ -370,6 +438,7 @@ function generateHtmlReport(
             gap: 15px;
             margin-top: 10px;
             font-size: 13px;
+            flex-wrap: wrap;
         }
         .stat {
             padding: 4px 8px;
@@ -436,15 +505,108 @@ function generateHtmlReport(
             color: #999;
             font-style: italic;
         }
+        .timing-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #ddd;
+        }
+        .timing-section h4 {
+            margin: 0 0 10px 0;
+            color: #9C27B0;
+            font-size: 14px;
+        }
+        .timing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        .timing-item {
+            background: #F3E5F5;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .timing-item .timing-label {
+            color: #7B1FA2;
+            font-weight: 500;
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        .timing-item .timing-value {
+            color: #4A148C;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .timing-family-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        .timing-family-table th,
+        .timing-family-table td {
+            padding: 6px 10px;
+            text-align: left;
+            border-bottom: 1px solid #E1BEE7;
+        }
+        .timing-family-table th {
+            background: #E1BEE7;
+            color: #4A148C;
+            font-weight: 600;
+        }
+        .timing-family-table td {
+            background: #F3E5F5;
+        }
+        .timing-bar {
+            display: flex;
+            height: 20px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        .timing-bar-segment {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: white;
+            font-weight: 600;
+        }
+        .timing-bar-load {
+            background: #7B1FA2;
+        }
+        .timing-bar-detect {
+            background: #AB47BC;
+        }
+        .image-timing {
+            margin-top: 10px;
+            padding: 8px;
+            background: #F3E5F5;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .image-timing-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+        }
+        .image-timing-label {
+            color: #7B1FA2;
+        }
+        .image-timing-value {
+            color: #4A148C;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
-    <h1>🏷️ AprilTag Detector Comparison Report</h1>
+    <h1>AprilTag Detector Comparison Report</h1>
     <p>Comparison of detector performance against ground truth annotations.</p>
 `;
 
   // Summary Section
-  html += '<h2>📊 Summary Statistics</h2>\n';
+  html += '<h2>Summary Statistics</h2>\n';
   html += '<div class="summary-grid">\n';
 
   for (const detectorName of detectorNames) {
@@ -497,13 +659,48 @@ function generateHtmlReport(
       html += '</div>\n';
     }
 
+    // Timing section
+    if (stats.timing.imageCount > 0) {
+      html += '<div class="timing-section">\n';
+      html += '<h4>Performance Timing</h4>\n';
+      html += '<div class="timing-grid">\n';
+      html += `<div class="timing-item"><span class="timing-label">Avg Image Load</span><span class="timing-value">${stats.timing.avgImageLoadMs.toFixed(1)} ms</span></div>\n`;
+      html += `<div class="timing-item"><span class="timing-label">Avg Detection</span><span class="timing-value">${stats.timing.avgTotalDetectionMs.toFixed(1)} ms</span></div>\n`;
+      html += `<div class="timing-item"><span class="timing-label">Total Time</span><span class="timing-value">${((stats.timing.totalImageLoadMs + stats.timing.totalDetectionMs) / 1000).toFixed(2)} s</span></div>\n`;
+      html += `<div class="timing-item"><span class="timing-label">Images Processed</span><span class="timing-value">${stats.timing.imageCount}</span></div>\n`;
+      html += '</div>\n';
+
+      // Timing bar visualization
+      const totalAvg = stats.timing.avgImageLoadMs + stats.timing.avgTotalDetectionMs;
+      if (totalAvg > 0) {
+        const loadPct = (stats.timing.avgImageLoadMs / totalAvg * 100).toFixed(0);
+        const detectPct = (stats.timing.avgTotalDetectionMs / totalAvg * 100).toFixed(0);
+        html += '<div class="timing-bar">\n';
+        html += `<div class="timing-bar-segment timing-bar-load" style="width: ${loadPct}%" title="Image Load: ${stats.timing.avgImageLoadMs.toFixed(1)}ms">Load</div>\n`;
+        html += `<div class="timing-bar-segment timing-bar-detect" style="width: ${detectPct}%" title="Detection: ${stats.timing.avgTotalDetectionMs.toFixed(1)}ms">Detect</div>\n`;
+        html += '</div>\n';
+      }
+
+      // Per-family timing table
+      if (stats.timing.familyTimings.size > 0) {
+        html += '<table class="timing-family-table">\n';
+        html += '<tr><th>Family</th><th>Avg Init</th><th>Avg Detect</th><th>Total</th></tr>\n';
+        for (const [family, timing] of Array.from(stats.timing.familyTimings.entries()).sort()) {
+          html += `<tr><td>${family}</td><td>${timing.avgInit.toFixed(2)} ms</td><td>${timing.avgDetect.toFixed(2)} ms</td><td>${(timing.avgInit + timing.avgDetect).toFixed(2)} ms</td></tr>\n`;
+        }
+        html += '</table>\n';
+      }
+
+      html += '</div>\n';
+    }
+
     html += '</div>\n';
   }
 
   html += '</div>\n';
 
   // Per-Image Results
-  html += '<h2>📸 Per-Image Results</h2>\n';
+  html += '<h2>Per-Image Results</h2>\n';
 
   for (const [imageName, result] of Array.from(results.entries()).sort()) {
     html += `<div class="image-section">\n`;
@@ -545,6 +742,7 @@ function generateHtmlReport(
       const detected = result.detectorResults.get(detectorName) || [];
       const missed = result.missed.get(detectorName) || new Set();
       const fps = result.falsePositives.get(detectorName) || new Set();
+      const timing = result.timings.get(detectorName);
 
       // Stats
       html += '<div class="stats-row">\n';
@@ -552,6 +750,18 @@ function generateHtmlReport(
       html += `<span class="stat" style="color: #D32F2F;">Missed: ${missed.size}</span>\n`;
       html += `<span class="stat" style="color: #F57C00;">False Pos: ${fps.size}</span>\n`;
       html += '</div>\n';
+
+      // Timing info for this image
+      if (timing) {
+        html += '<div class="image-timing">\n';
+        html += '<div class="image-timing-row"><span class="image-timing-label">Image Load:</span>';
+        html += `<span class="image-timing-value">${timing.image_load_ms.toFixed(1)} ms</span></div>\n`;
+        html += '<div class="image-timing-row"><span class="image-timing-label">Detection:</span>';
+        html += `<span class="image-timing-value">${timing.total_detection_ms.toFixed(1)} ms</span></div>\n`;
+        html += '<div class="image-timing-row"><span class="image-timing-label">Total:</span>';
+        html += `<span class="image-timing-value">${(timing.image_load_ms + timing.total_detection_ms).toFixed(1)} ms</span></div>\n`;
+        html += '</div>\n';
+      }
 
       // Missed tags
       if (missed.size > 0) {
@@ -797,6 +1007,10 @@ async function main() {
     console.log(`  True Positives:   ${stats.truePositives}`);
     console.log(`  Missed:           ${stats.missed}`);
     console.log(`  False Positives:  ${stats.falsePositives}`);
+    if (stats.timing.imageCount > 0) {
+      console.log(`  Avg Load Time:    ${stats.timing.avgImageLoadMs.toFixed(1)} ms`);
+      console.log(`  Avg Detect Time:  ${stats.timing.avgTotalDetectionMs.toFixed(1)} ms`);
+    }
   }
 
   generateHtmlReport(results, summaries, detectorNames, outputPath, dataDir, groundTruthDir, resultsDir);
