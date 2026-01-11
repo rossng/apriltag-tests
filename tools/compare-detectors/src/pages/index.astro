@@ -2,14 +2,18 @@
 import Layout from '../layouts/Layout.astro';
 import SummaryGrid from '../components/SummaryGrid.astro';
 import ImageSection from '../components/ImageSection.astro';
-import { loadAllData, toSerializableResult, toSerializableSummary } from '../lib/data';
+import { loadAllData, toSerializableResult, toSerializableSummary, discoverDetectors } from '../lib/data';
 import type { SerializableSummary, SerializableImageResult } from '../lib/types';
 
 // Get configuration from environment variables
 const groundTruthDir = import.meta.env.GROUND_TRUTH_DIR || '../../ground-truth';
 const resultsDir = import.meta.env.RESULTS_DIR || '../../results';
-const detectorsEnv = import.meta.env.DETECTORS || 'apriltag-3.4.5,apriltags-kaess-3aea96d,kornia-rs-apriltag';
-const detectorNames = detectorsEnv.split(',').map((s: string) => s.trim());
+
+// Auto-discover detectors from results directory, or use env var if specified
+const detectorsEnv = import.meta.env.DETECTORS;
+const detectorNames = detectorsEnv
+  ? detectorsEnv.split(',').map((s: string) => s.trim())
+  : discoverDetectors(resultsDir);
 
 // Load all data at build time
 const { results, summaries, rawDetections } = loadAllData(groundTruthDir, resultsDir, detectorNames);

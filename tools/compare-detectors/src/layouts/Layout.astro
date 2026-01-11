@@ -140,17 +140,53 @@ const { title } = Astro.props;
     }
     .viewer-controls {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       margin-bottom: 15px;
       flex-wrap: wrap;
+      align-items: stretch;
+    }
+    .detector-pill {
+      display: flex;
+      align-items: center;
+      background: #f0f0f0;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid #ddd;
+    }
+    .pill-label {
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #555;
+      background: #e8e8e8;
+      border-right: 1px solid #ddd;
+      white-space: nowrap;
+    }
+    .pill-buttons {
+      display: flex;
+    }
+    .pill-buttons .viewer-button {
+      border-radius: 0;
+      border: none;
+      border-left: 1px solid #ddd;
+    }
+    .pill-buttons .viewer-button:first-child {
+      border-left: none;
+    }
+    .detector-pill:has(.viewer-button.active) {
+      border-color: #2196F3;
+    }
+    .detector-pill:has(.viewer-button.active) .pill-label {
+      background: #E3F2FD;
+      color: #1976D2;
     }
     .viewer-button {
-      padding: 10px 20px;
+      padding: 10px 16px;
       border: 2px solid #ddd;
       border-radius: 6px;
       background: white;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
       transition: all 0.2s;
     }

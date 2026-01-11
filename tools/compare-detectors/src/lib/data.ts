@@ -37,6 +37,17 @@ function loadManifest(manifestPath: string): Manifest | null {
   }
 }
 
+export function discoverDetectors(resultsDir: string): string[] {
+  if (!existsSync(resultsDir)) {
+    return [];
+  }
+  const entries = readdirSync(resultsDir, { withFileTypes: true });
+  return entries
+    .filter(e => e.isDirectory() && !e.name.startsWith('.'))
+    .map(e => e.name)
+    .sort();
+}
+
 export function collectResults(
   groundTruthDir: string,
   resultsDir: string,

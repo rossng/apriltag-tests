@@ -295,13 +295,12 @@
           GROUND_TRUTH_DIR="''${GROUND_TRUTH_DIR:-ground-truth}"
           RESULTS_DIR="''${RESULTS_DIR:-results}"
           DATA_DIR="''${DATA_DIR:-data}"
-          DETECTORS="''${DETECTORS:-apriltag-3.4.5,apriltags-kaess-3aea96d,kornia-rs-apriltag}"
 
           echo "Building detector comparison site..."
           echo "  Ground Truth:    $GROUND_TRUTH_DIR"
           echo "  Results:         $RESULTS_DIR"
           echo "  Data:            $DATA_DIR"
-          echo "  Detectors:       $DETECTORS"
+          echo "  Detectors:       ''${DETECTORS:-(auto-discover from results)}"
           echo ""
 
           cd tools/compare-detectors
@@ -312,10 +311,10 @@
             ${pkgs.nodejs}/bin/npm install
           fi
 
-          # Build Astro site
+          # Build Astro site - only pass DETECTORS if explicitly set
           GROUND_TRUTH_DIR="../../$GROUND_TRUTH_DIR" \
           RESULTS_DIR="../../$RESULTS_DIR" \
-          DETECTORS="$DETECTORS" \
+          ''${DETECTORS:+DETECTORS="$DETECTORS"} \
           ${pkgs.nodejs}/bin/npm run build
 
           # Copy images to dist for visualization

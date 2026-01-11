@@ -1,5 +1,6 @@
 ---
 import type { SerializableDetection } from '../lib/types';
+import { parseDetectorName, formatArch } from '../lib/types';
 
 interface Props {
   imageId: string;
@@ -16,13 +17,34 @@ const detectionData = {
   'ground-truth': groundTruth,
   ...detectorResults
 };
+
+// Group detectors by base name
+const detectorGroups = new Map<string, { fullName: string; arch: string | null }[]>();
+for (const name of detectorNames) {
+  const info = parseDetectorName(name);
+  if (!detectorGroups.has(info.baseName)) {
+    detectorGroups.set(info.baseName, []);
+  }
+  detectorGroups.get(info.baseName)!.push({ fullName: name, arch: info.arch });
+}
 ---
 
 <div class="image-viewer">
   <div class="viewer-controls" data-image-id={imageId}>
-    <button class="viewer-button active" data-detector="ground-truth">Ground Truth</button>
-    {detectorNames.map((name) => (
-      <button class="viewer-button" data-detector={name}>{name}</button>
+    <div class="detector-pill">
+      <button class="viewer-button active" data-detector="ground-truth">Ground Truth</button>
+    </div>
+    {[...detectorGroups.entries()].map(([baseName, detectors]) => (
+      <div class="detector-pill">
+        <span class="pill-label">{baseName}</span>
+        <div class="pill-buttons">
+          {detectors.map((d) => (
+            <button class="viewer-button" data-detector={d.fullName}>
+              {d.arch ? formatArch(d.arch) : 'Default'}
+            </button>
+          ))}
+        </div>
+      </div>
     ))}
   </div>
   <div class="canvas-container">
